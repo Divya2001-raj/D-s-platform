@@ -24,18 +24,18 @@
     --accent-primary-fg: #FFFFFF;
     --accent-hover: #6D28D9;
     --accent-highlight: #7C3AED;
-    --accent-soft: #8B5CF6;
-    --accent-orchid: #D946EF;
+    --accent-soft: #7C3AED;
+    --accent-orchid: #7C3AED;
     --accent-secondary-bg: #F1ECF9;
     --accent-secondary-border: #DDD6FE;
     --accent-pass: #22C55E;
     --accent-fail: #EF4444;
-    --card-shadow: 0 12px 30px rgba(18, 16, 22, 0.07);
-    --glow-borahae: 0 8px 24px rgba(124, 58, 237, 0.25);
+    --card-shadow: none;
+    --glow-borahae: none;
   }
 
   .dark {
-    /* Dark Mode (Default) — BTS "Borahae" Purple & Velvet Obsidian */
+    /* Dark Mode (Default) — Matte Single-Tone BTS Purple & Velvet Obsidian */
     --bg-canvas: #121016;
     --bg-card: #1E1B24;
     --bg-inset: #282430;
@@ -48,18 +48,18 @@
     --text-heading: #FFFFFF;
     --text-secondary: #A19DB0;
     --text-muted: #6E6A7C;
-    --accent-primary: #8B5CF6;
+    --accent-primary: #7C3AED;
     --accent-primary-fg: #FFFFFF;
-    --accent-hover: #7C3AED;
+    --accent-hover: #6D28D9;
     --accent-highlight: #A78BFA;
-    --accent-soft: #C4B5FD;
-    --accent-orchid: #D946EF;
+    --accent-soft: #A78BFA;
+    --accent-orchid: #7C3AED;
     --accent-secondary-bg: #282430;
     --accent-secondary-border: #2D2936;
     --accent-pass: #22C55E;
     --accent-fail: #EF4444;
-    --card-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
-    --glow-borahae: 0 0 24px rgba(139, 92, 246, 0.45);
+    --card-shadow: none;
+    --glow-borahae: none;
   }
 
   html {
@@ -91,13 +91,13 @@
   color: var(--text-primary);
 }
 
-/* Matte Dark Charcoal (#1E1B24) Bento Cards (or Pure White in Light Mode) */
+/* Matte Dark Charcoal (#1E1B24) Bento Cards (Flat, No Drop Shadow) */
 .glass-surface {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  box-shadow: var(--card-shadow);
+  box-shadow: none;
   border-radius: 22px;
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  transition: border-color 180ms ease, background-color 180ms ease;
 }
 
 .glass-surface.rounded-none {
@@ -113,45 +113,32 @@
   border: 1px solid var(--border-subtle);
 }
 
-/* Signature BTS "Borahae" Royal Purple -> Violet -> Orchid-Magenta Gradient Tokens */
-.gradient-luminous {
-  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 52%, #E879F9 100%);
-  color: #FFFFFF;
-  box-shadow: var(--glow-borahae);
-}
-
+/* Single Flat Matte BTS Purple (No Gradients, No Glows) */
+.gradient-luminous,
 .gradient-violet {
-  background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 48%, #D946EF 100%);
-  color: #FFFFFF;
-  box-shadow: var(--glow-borahae);
+  background: var(--accent-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
 }
 
-/* Borahae Primary CTAs & Luminous Capsule Buttons */
+/* Matte Borahae Primary CTAs & Capsule Buttons */
 .btn-primary,
 .btn-terracotta,
-.btn-crimson {
-  background-color: var(--accent-primary);
-  color: #FFFFFF;
+.btn-crimson,
+.btn-luminous {
+  background: var(--accent-primary) !important;
+  color: #FFFFFF !important;
   font-weight: 700;
-  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+  box-shadow: none !important;
+  transition: background-color 150ms ease, opacity 150ms ease;
 }
 .btn-primary:hover:not(:disabled),
 .btn-terracotta:hover:not(:disabled),
-.btn-crimson:hover:not(:disabled) {
-  background-color: var(--accent-hover);
-  box-shadow: var(--glow-borahae);
-}
-
-.btn-luminous {
-  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 52%, #E879F9 100%);
-  color: #FFFFFF;
-  font-weight: 700;
-  box-shadow: var(--glow-borahae);
-  transition: filter 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
-}
+.btn-crimson:hover:not(:disabled),
 .btn-luminous:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow: 0 0 28px rgba(168, 85, 247, 0.55);
+  background: var(--accent-hover) !important;
+  filter: none !important;
+  box-shadow: none !important;
 }
 
 .btn-secondary {
@@ -164,22 +151,39 @@
   border-color: var(--accent-primary);
 }
 
-/* Active Tab / Pill Row Borahae Gradient State */
+/* Active Tab / Pill Row Matte BTS Purple State */
 .tab-active {
-  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 52%, #E879F9 100%);
+  background: var(--accent-primary) !important;
   color: #FFFFFF !important;
   font-weight: 700;
-  box-shadow: var(--glow-borahae);
+  box-shadow: none !important;
 }
 
-/* Active Dock Squircle — Glowing Borahae Gradient with High-Contrast Dark Icon */
+/* Active Dock Squircle — Single Matte BTS Purple with Crisp White Icon */
 .borahae-squircle-active {
-  background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 48%, #D946EF 100%);
-  color: #121016 !important;
-  box-shadow: var(--glow-borahae);
+  background: var(--accent-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
 }
 .borahae-squircle-active * {
-  color: #121016 !important;
+  color: #FFFFFF !important;
+}
+
+/* Override any inline Tailwind purple/pink gradients or neon shadows in JSX */
+[class*="from-purple-"],
+[class*="from-violet-"],
+[class*="bg-gradient-to-"][class*="purple"],
+[class*="bg-gradient-to-"][class*="violet"],
+[class*="bg-gradient-to-"][class*="fuchsia"] {
+  background-image: none !important;
+  background-color: var(--accent-primary) !important;
+  box-shadow: none !important;
+}
+[class*="shadow-"][class*="purple"],
+[class*="shadow-"][class*="violet"],
+[class*="shadow-"][class*="fuchsia"],
+[class*="shadow-[0_0_"] {
+  box-shadow: none !important;
 }
 
 /* Mint Emerald Pass / Action Pill */
@@ -187,10 +191,10 @@
   background-color: #22C55E;
   color: #121016 !important;
   font-weight: 700;
-  transition: filter 150ms ease, transform 150ms ease;
+  transition: filter 150ms ease;
 }
 .pill-pass-solid:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .tabular-nums {
@@ -315,7 +319,7 @@ html:not(.dark) .prose-invert {
   --tw-prose-pre-code: #13111C;
 }
 
-/* Guarantee High-Contrast White Text Inside Borahae Gradient CTAs & Active Pills in Both Modes */
+/* Guarantee High-Contrast White Text Inside Matte Borahae CTAs & Active Pills */
 .btn-primary,
 .btn-primary *,
 .btn-luminous,
@@ -348,7 +352,7 @@ html:not(.dark) .prose-invert {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.7);
+  background: rgba(124, 58, 237, 0.7);
 }
 
 /* 3D Flip Card Utilities */
