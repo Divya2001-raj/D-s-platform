@@ -773,7 +773,7 @@ export default function App() {
     }
     return {
       view: route,
-      title: 'D\'s platforms — DATA ENGINEER 360',
+      title: 'D Platform — DATA ENGINEER 360',
       domain: 'Full-Stack Data Engineering',
       experienceTier: profile.experienceTier,
     };
@@ -840,7 +840,7 @@ export default function App() {
               <BrandMark size={40} variant="avatar" showOnlineDot />
               {sidebarOpen && (
                 <div className="min-w-0">
-                  <div className="truncate font-display text-sm font-bold text-white">Menu</div>
+                  <div className="truncate font-display text-sm font-bold text-white">D</div>
                   <div className="truncate font-mono text-[10px] tracking-wider text-slate-400">
                     DATA ENGINEER 360
                   </div>
