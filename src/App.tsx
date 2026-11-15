@@ -115,7 +115,7 @@ import { SystemDiagnosticsSuite } from './components/SystemDiagnosticsSuite';
 
 const DEFAULT_PROFILE: UserProfile = {
   uid: 'guest',
-  displayName: 'D',
+  displayName: 'Di Platform',
   experienceTier: '4-6 yrs',
   targetPositions: ['Senior Data Engineer', 'Data Engineer II'],
   targetCompanies: ['Google', 'Databricks', 'Uber', 'Snowflake', 'PhonePe'],
@@ -391,7 +391,7 @@ export default function App() {
           ensureUserDocuments(fbUser),
           checkIsAdmin(fbUser),
         ]);
-        setProfile(prof);
+        setProfile({ ...prof, displayName: 'Di Platform' });
         setProgress(prog);
         setIsAdmin(adminFlag);
 
@@ -773,7 +773,7 @@ export default function App() {
     }
     return {
       view: route,
-      title: 'D Platform — DATA ENGINEER 360',
+      title: 'Di Platform — DATA ENGINEER 360',
       domain: 'Full-Stack Data Engineering',
       experienceTier: profile.experienceTier,
     };
@@ -840,7 +840,7 @@ export default function App() {
               <BrandMark size={40} variant="avatar" showOnlineDot />
               {sidebarOpen && (
                 <div className="min-w-0">
-                  <div className="truncate font-display text-sm font-bold text-white">D</div>
+                  <div className="truncate font-display text-sm font-bold text-white">Di Platform</div>
                   <div className="truncate font-mono text-[10px] tracking-wider text-slate-400">
                     DATA ENGINEER 360
                   </div>
@@ -1069,7 +1069,7 @@ export default function App() {
                     className="flex items-center gap-2.5 text-left"
                   >
                     <BrandMark size={32} variant="avatar" showOnlineDot />
-                    <span className="font-display text-sm font-bold text-white">DATA ENGINEER 360</span>
+                    <span className="font-display text-sm font-bold text-white">Di Platform</span>
                   </button>
                   <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 hover:text-white">
                     <X className="h-5 w-5" />
@@ -1223,7 +1223,7 @@ export default function App() {
           <main className="mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6">
             {route === 'dashboard' && (
               <DashboardView
-                profile={profile}
+                profile={{ ...profile, displayName: 'Di Platform' }}
                 progress={progress}
                 questions={allQuestions}
                 mistakeVault={mistakeVault}
@@ -1522,7 +1522,7 @@ export default function App() {
           {/* Quiet Minimal Footer with E2E System Diagnostics Modal Trigger */}
           <footer className="border-t border-[var(--border-subtle)] px-6 pt-4 pb-24 text-[11px] text-slate-400">
             <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3">
-              <span>D&apos;s platforms — DATA ENGINEER 360 · Master Every Skill. Understand Every Concept. Crack Every Round.</span>
+              <span>Di Platform — DATA ENGINEER 360 · Master Every Skill. Understand Every Concept. Crack Every Round.</span>
               <button
                 type="button"
                 onClick={() => setDiagnosticsModalOpen(true)}
