@@ -80,13 +80,13 @@ export function CommandPalette({
             onClick={(e) => e.stopPropagation()}
             className="glass-surface w-full max-w-2xl overflow-hidden rounded-2xl shadow-2xl"
           >
-            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3.5">
-              <Search className="h-4 w-4 shrink-0 text-[#2DD4BF]" />
+            <div className="flex items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3.5">
+              <Search className="h-4 w-4 shrink-0 text-white" />
               <input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search 126+ SQL/Python/PySpark problems, companies, Knowledge Hub, or views..."
+                placeholder={`Search ${questions.length}+ SQL/Python/PySpark problems, companies, Knowledge Hub...`}
                 className="w-full bg-transparent text-sm text-white placeholder-slate-500 outline-none"
               />
               <button
@@ -103,10 +103,10 @@ export function CommandPalette({
                 <div className="px-2 pb-1.5 text-xs font-medium text-slate-500">Quick Workspaces</div>
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                   {[
-                    { id: 'sql-arena' as AppRoute, label: 'SQL Arena' },
-                    { id: 'python-arena' as AppRoute, label: 'Python & DSA' },
-                    { id: 'system-design' as AppRoute, label: 'System Design' },
-                    { id: 'mock-interview' as AppRoute, label: 'AI Mock Interview' },
+                    { id: 'quest-roadmap' as AppRoute, label: 'Quest Roadmap' },
+                    { id: 'rounds' as AppRoute, label: '8 Interview Rounds' },
+                    { id: 'mock-interview' as AppRoute, label: 'Live AI Interview' },
+                    { id: 'job-radar' as AppRoute, label: 'Live Job Radar' },
                   ].map((nav) => (
                     <button
                       key={nav.id}
@@ -114,7 +114,7 @@ export function CommandPalette({
                         onNavigate(nav.id);
                         onClose();
                       }}
-                      className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 text-xs font-medium text-slate-200 transition-colors hover:border-[#2DD4BF]/40 hover:text-[#2DD4BF]"
+                      className="btn-secondary flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium"
                     >
                       <span className="truncate">{nav.label}</span>
                       <ArrowRight className="h-3 w-3 shrink-0 opacity-60" />
@@ -138,12 +138,12 @@ export function CommandPalette({
                       >
                         <div className="flex min-w-0 items-center gap-2.5">
                           {q.domain === 'Analytical SQL' ? (
-                            <Terminal className="h-4 w-4 shrink-0 text-[#2DD4BF]" />
+                            <Terminal className="h-4 w-4 shrink-0 text-slate-300" />
                           ) : (
-                            <Code2 className="h-4 w-4 shrink-0 text-[#818CF8]" />
+                            <Code2 className="h-4 w-4 shrink-0 text-slate-300" />
                           )}
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-slate-100">{q.title}</div>
+                            <div className="truncate text-sm font-medium text-white">{q.title}</div>
                             <div className="truncate text-xs text-slate-400">
                               {q.domain} · {q.topic} · {q.difficulty}
                             </div>
@@ -169,9 +169,9 @@ export function CommandPalette({
                         }}
                         className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5"
                       >
-                        <BookOpen className="h-4 w-4 shrink-0 text-[#A78BFA]" />
+                        <BookOpen className="h-4 w-4 shrink-0 text-slate-300" />
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-medium text-slate-100">{t.title}</div>
+                          <div className="truncate text-sm font-medium text-white">{t.title}</div>
                           <div className="truncate text-xs text-slate-400">{t.domain}</div>
                         </div>
                       </button>
@@ -193,9 +193,9 @@ export function CommandPalette({
                         }}
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5"
                       >
-                        <Building2 className="h-4 w-4 shrink-0 text-[#FBBF24]" />
+                        <Building2 className="h-4 w-4 shrink-0 text-slate-300" />
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-medium text-slate-100">{c.name}</div>
+                          <div className="truncate text-sm font-medium text-white">{c.name}</div>
                           <div className="truncate text-xs text-slate-400">{c.primaryStack.slice(0, 3).join(' · ')}</div>
                         </div>
                       </button>
@@ -217,9 +217,9 @@ export function CommandPalette({
                         }}
                         className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5"
                       >
-                        <Cpu className="h-4 w-4 shrink-0 text-[#FB7185]" />
+                        <Cpu className="h-4 w-4 shrink-0 text-slate-300" />
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-medium text-slate-100">{s.title}</div>
+                          <div className="truncate text-sm font-medium text-white">{s.title}</div>
                           <div className="truncate text-xs text-slate-400">{s.severity} · {s.domain}</div>
                         </div>
                       </button>

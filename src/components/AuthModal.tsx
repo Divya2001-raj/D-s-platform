@@ -86,10 +86,14 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           >
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <BrandMark size={32} />
+                <BrandMark size={38} />
                 <div>
-                  <h2 className="font-display text-lg font-bold text-white">D&apos;s platforms</h2>
-                  <p className="text-xs text-slate-400">Sync progress, SM-2 queue &amp; AI notebooks</p>
+                  <h2 className="font-display text-lg font-bold text-white">
+                    D&apos;s platforms — DATA ENGINEER 360
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Sync progress, SM-2 queue, Live Mock Scorecards &amp; Job Tracker
+                  </p>
                 </div>
               </div>
               <button
@@ -104,43 +108,43 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="mb-5 flex w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] px-4 py-2.5 text-sm font-semibold text-[#07080C] transition-opacity hover:opacity-95 disabled:opacity-60"
+              className="btn-primary mb-5 flex w-full items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm disabled:opacity-60"
             >
               <span>Continue with Google</span>
             </button>
 
-            <div className="mb-5 flex items-center gap-3 text-xs text-slate-500">
-              <div className="h-px flex-1 bg-white/10" />
+            <div className="mb-5 flex items-center gap-3 text-xs text-slate-400">
+              <div className="h-px flex-1 bg-[var(--border-subtle)]" />
               <span>or use email</span>
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-[var(--border-subtle)]" />
             </div>
 
             <form onSubmit={handleEmailAuth} className="space-y-3.5">
               {mode === 'signup' && (
                 <div className="relative">
-                  <UserIcon className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-slate-500" />
+                  <UserIcon className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Full name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07080C]/80 py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 outline-none focus:border-[#2DD4BF]"
+                    className="inset-surface w-full rounded-xl py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 outline-none focus:border-[var(--border-strong)]"
                   />
                 </div>
               )}
               <div className="relative">
-                <Mail className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-slate-500" />
+                <Mail className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-slate-400" />
                 <input
                   type="email"
                   required
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#07080C]/80 py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 outline-none focus:border-[#2DD4BF]"
+                  className="inset-surface w-full rounded-xl py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 outline-none focus:border-[var(--border-strong)]"
                 />
               </div>
               <div className="relative">
-                <Lock className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-slate-500" />
+                <Lock className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-slate-400" />
                 <input
                   type="password"
                   required
@@ -148,12 +152,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
                   placeholder="Password (min 6 chars)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#07080C]/80 py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 outline-none focus:border-[#2DD4BF]"
+                  className="inset-surface w-full rounded-xl py-2.5 pr-3 pl-9 text-sm text-white placeholder-slate-500 outline-none focus:border-[var(--border-strong)]"
                 />
               </div>
 
               {error && (
-                <div className="rounded-xl border border-[#FB7185]/30 bg-[#FB7185]/10 px-3 py-2 text-xs text-[#FB7185]">
+                <div className="rounded-xl border border-[var(--border-strong)] bg-[var(--bg-inset)] px-3 py-2 text-xs text-white">
                   {error}
                 </div>
               )}
@@ -161,7 +165,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-60"
+                className="btn-secondary w-full rounded-xl py-2.5 text-sm font-medium disabled:opacity-60"
               >
                 {loading ? 'Authenticating...' : mode === 'signin' ? 'Sign In with Email' : 'Create Account'}
               </button>
@@ -169,11 +173,11 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 
             <div className="mt-4 text-center text-xs text-slate-400">
               {mode === 'signin' ? (
-                <button onClick={() => setMode('signup')} className="hover:text-[#2DD4BF]">
+                <button onClick={() => setMode('signup')} className="hover:text-white hover:underline">
                   Need an account? Sign up
                 </button>
               ) : (
-                <button onClick={() => setMode('signin')} className="hover:text-[#2DD4BF]">
+                <button onClick={() => setMode('signin')} className="hover:text-white hover:underline">
                   Already registered? Sign in
                 </button>
               )}

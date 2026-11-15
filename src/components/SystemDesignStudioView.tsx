@@ -169,7 +169,7 @@ export function SystemDesignStudioView({
           </p>
         </div>
 
-        <div className="flex rounded-xl border border-white/10 bg-[#10121A] p-1 text-xs">
+        <div className="inset-surface flex rounded-xl p-1 text-xs">
           {[
             { id: 'studio' as const, label: 'System Design Studio' },
             { id: 'scenarios' as const, label: 'Production Scenario Lab' },
@@ -180,7 +180,7 @@ export function SystemDesignStudioView({
               onClick={() => setSubTab(t.id)}
               className={`rounded-lg px-3.5 py-1.5 font-medium transition-colors ${
                 subTab === t.id
-                  ? 'bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] font-semibold text-[#07080C]'
+                  ? 'tab-active'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -196,7 +196,7 @@ export function SystemDesignStudioView({
             <div className="glass-surface rounded-2xl p-5 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
-                  <Layers className="h-4 w-4 text-[#2DD4BF]" />
+                  <Layers className="h-4 w-4 text-white" />
                   <span>Pipeline Blueprint Canvas</span>
                 </div>
                 <div className="flex gap-2">
@@ -208,7 +208,7 @@ export function SystemDesignStudioView({
                       setSummary(bp.summary);
                       setBlocks(bp.blocks);
                     }}
-                    className="rounded-lg border border-white/10 px-2.5 py-1 text-xs text-slate-300 hover:bg-white/5"
+                    className="btn-secondary rounded-lg px-2.5 py-1 text-xs"
                   >
                     Load Uber Real-Time
                   </button>
@@ -220,7 +220,7 @@ export function SystemDesignStudioView({
                       setSummary(bp.summary);
                       setBlocks(bp.blocks);
                     }}
-                    className="rounded-lg border border-white/10 px-2.5 py-1 text-xs text-slate-300 hover:bg-white/5"
+                    className="btn-secondary rounded-lg px-2.5 py-1 text-xs"
                   >
                     Load Fintech CDC
                   </button>
@@ -232,32 +232,32 @@ export function SystemDesignStudioView({
                   value={designTitle}
                   onChange={(e) => setDesignTitle(e.target.value)}
                   placeholder="Architecture Title"
-                  className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs font-semibold text-white outline-none focus:border-[#2DD4BF]"
+                  className="inset-surface rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none focus:border-[var(--accent-primary)]"
                 />
                 <input
                   value={scaleMetrics}
                   onChange={(e) => setScaleMetrics(e.target.value)}
                   placeholder="Throughput / Latency SLAs"
-                  className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-slate-200 outline-none focus:border-[#2DD4BF]"
+                  className="inset-surface rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-[var(--accent-primary)]"
                 />
               </div>
 
               {/* Interactive Connected Flow */}
-              <div className="rounded-xl border border-white/10 bg-[#07080C]/90 p-4">
+              <div className="inset-surface rounded-xl p-4">
                 {blocks.length === 0 ? (
-                  <p className="py-6 text-center text-xs text-slate-500">
+                  <p className="py-6 text-center text-xs text-slate-400">
                     Add architecture components from the palette on the right.
                   </p>
                 ) : (
                   <div className="flex flex-wrap items-center gap-2.5">
                     {blocks.map((blk, i) => (
                       <React.Fragment key={blk.id}>
-                        <div className="group relative rounded-xl border border-white/15 bg-[#10121A] px-3.5 py-2.5">
+                        <div className="group relative rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] px-3.5 py-2.5">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="font-mono text-[10px] text-[#2DD4BF]">{blk.category}</span>
+                            <span className="font-mono text-[10px] font-semibold text-slate-400">{blk.category}</span>
                             <button
                               onClick={() => setBlocks((p) => p.filter((x) => x.id !== blk.id))}
-                              className="text-slate-500 hover:text-[#FB7185]"
+                              className="text-slate-400 hover:text-white"
                               aria-label={`Remove ${blk.label}`}
                             >
                               <Trash2 className="h-3 w-3" />
@@ -266,7 +266,7 @@ export function SystemDesignStudioView({
                           <div className="mt-0.5 text-xs font-semibold text-white">{blk.label}</div>
                           <div className="mt-0.5 text-[11px] text-slate-400">{blk.note}</div>
                         </div>
-                        {i < blocks.length - 1 && <ArrowRight className="h-4 w-4 shrink-0 text-[#818CF8]" />}
+                        {i < blocks.length - 1 && <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />}
                       </React.Fragment>
                     ))}
                   </div>
@@ -278,14 +278,14 @@ export function SystemDesignStudioView({
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 placeholder="Describe partitioning, late-arriving data handling, backpressure, and failure recovery..."
-                className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2.5 text-xs leading-relaxed text-slate-200 outline-none focus:border-[#2DD4BF]"
+                className="inset-surface w-full rounded-xl px-3 py-2.5 text-xs leading-relaxed text-slate-200 outline-none focus:border-[var(--accent-primary)]"
               />
 
               <div className="flex justify-end">
                 <button
                   onClick={runDesignReview}
                   disabled={reviewLoading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] px-4 py-2 text-xs font-semibold text-[#07080C] disabled:opacity-60"
+                  className="btn-primary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs disabled:opacity-60"
                 >
                   {reviewLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                   <span>{reviewLoading ? 'Reviewing Trade-offs...' : 'Run Staff Architecture Review'}</span>
@@ -299,7 +299,7 @@ export function SystemDesignStudioView({
                   <h3 className="font-display text-base font-bold text-white">Staff Architecture Critique</h3>
                   <button
                     onClick={() => handleSaveNote(`Design Review: ${designTitle}`, reviewMarkdown, 'System Design')}
-                    className="inline-flex items-center gap-1.5 text-xs text-[#2DD4BF] hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white hover:underline"
                   >
                     {savedFlag ? <Check className="h-3.5 w-3.5" /> : <BookmarkPlus className="h-3.5 w-3.5" />}
                     <span>{savedFlag ? 'Saved' : 'Save to Notebook'}</span>
@@ -321,7 +321,7 @@ export function SystemDesignStudioView({
                 <button
                   key={item.label}
                   onClick={() => addBlock(item)}
-                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-[#07080C]/70 px-3.5 py-2.5 text-left transition-colors hover:border-[#2DD4BF]/40"
+                  className="inset-surface flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left transition-colors hover:border-[var(--border-strong)]"
                 >
                   <div>
                     <div className="text-xs font-semibold text-white">{item.label}</div>
@@ -329,7 +329,7 @@ export function SystemDesignStudioView({
                       {item.category} · {item.note}
                     </div>
                   </div>
-                  <Plus className="h-4 w-4 shrink-0 text-[#2DD4BF]" />
+                  <Plus className="h-4 w-4 shrink-0 text-white" />
                 </button>
               ))}
             </div>
@@ -351,13 +351,13 @@ export function SystemDesignStudioView({
                   }}
                   className={`w-full rounded-xl border p-3.5 text-left transition-colors ${
                     selectedScenario.id === sc.id
-                      ? 'border-[#FB7185]/50 bg-[#FB7185]/10 text-white'
-                      : 'border-white/10 bg-[#07080C]/60 text-slate-300 hover:border-white/25'
+                      ? 'tab-active border-transparent'
+                      : 'inset-surface text-slate-300 hover:border-[var(--border-strong)]'
                   }`}
                 >
                   <div className="flex items-center justify-between font-mono text-[11px]">
-                    <span className="text-[#FB7185]">{sc.severity}</span>
-                    <span className="text-slate-400">{sc.domain}</span>
+                    <span className="font-bold">{sc.severity}</span>
+                    <span className="opacity-75">{sc.domain}</span>
                   </div>
                   <div className="mt-1 text-xs font-semibold leading-snug">{sc.title}</div>
                 </button>
@@ -367,16 +367,16 @@ export function SystemDesignStudioView({
 
           <div className="glass-surface rounded-2xl p-6 space-y-5 xl:col-span-8">
             <div>
-              <div className="flex items-center gap-2 text-xs text-[#FB7185]">
-                <AlertTriangle className="h-4 w-4" />
-                <span>{selectedScenario.severity}</span>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <AlertTriangle className="h-4 w-4 text-white" />
+                <span className="font-mono font-bold text-white">{selectedScenario.severity}</span>
                 <span aria-hidden="true">·</span>
-                <span className="text-slate-400">{selectedScenario.environment}</span>
+                <span>{selectedScenario.environment}</span>
               </div>
               <h2 className="mt-1.5 font-display text-xl font-bold text-white">{selectedScenario.title}</h2>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#07080C]/80 p-4">
+            <div className="inset-surface rounded-xl p-4">
               <div className="text-xs font-semibold text-white">1. Problem &amp; Telemetry Clues</div>
               <p className="mt-1.5 text-sm text-slate-300">{selectedScenario.problem}</p>
               <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-slate-400">
@@ -388,13 +388,13 @@ export function SystemDesignStudioView({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#2DD4BF]">
+                <span className="text-xs font-semibold text-white">
                   Progressive Postmortem Investigation ({Math.min(revealedSteps, 4)} / 4)
                 </span>
                 {revealedSteps < 4 && (
                   <button
                     onClick={() => setRevealedSteps((s) => Math.min(4, s + 1))}
-                    className="rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/15"
+                    className="btn-primary rounded-xl px-3 py-1.5 text-xs"
                   >
                     Reveal Next Stage
                   </button>
@@ -402,7 +402,7 @@ export function SystemDesignStudioView({
               </div>
 
               {revealedSteps >= 1 && (
-                <div className="rounded-xl border border-white/10 bg-[#07080C]/70 p-4">
+                <div className="inset-surface rounded-xl p-4">
                   <div className="text-xs font-semibold text-white">2. Investigation Playbook</div>
                   <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-slate-300">
                     {selectedScenario.investigationSteps.map((st, idx) => (
@@ -413,8 +413,8 @@ export function SystemDesignStudioView({
               )}
 
               {revealedSteps >= 2 && (
-                <div className="rounded-xl border border-[#FBBF24]/30 bg-[#FBBF24]/5 p-4">
-                  <div className="text-xs font-semibold text-[#FBBF24]">3. Root Cause</div>
+                <div className="inset-surface rounded-xl p-4">
+                  <div className="text-xs font-semibold text-white">3. Root Cause</div>
                   <p className="mt-1.5 whitespace-pre-line text-xs leading-relaxed text-slate-200">
                     {selectedScenario.rootCause}
                   </p>
@@ -422,8 +422,8 @@ export function SystemDesignStudioView({
               )}
 
               {revealedSteps >= 3 && (
-                <div className="rounded-xl border border-[#34D399]/30 bg-[#34D399]/5 p-4">
-                  <div className="text-xs font-semibold text-[#34D399]">4. Production Fix</div>
+                <div className="inset-surface rounded-xl p-4">
+                  <div className="text-xs font-semibold text-white">4. Production Fix</div>
                   <p className="mt-1.5 whitespace-pre-line text-xs leading-relaxed text-slate-200">
                     {selectedScenario.solution}
                   </p>
@@ -431,8 +431,8 @@ export function SystemDesignStudioView({
               )}
 
               {revealedSteps >= 4 && (
-                <div className="rounded-xl border border-[#818CF8]/30 bg-[#818CF8]/5 p-4">
-                  <div className="text-xs font-semibold text-[#818CF8]">5. Architectural Trade-Offs &amp; Prevention</div>
+                <div className="inset-surface rounded-xl p-4">
+                  <div className="text-xs font-semibold text-white">5. Architectural Trade-Offs &amp; Prevention</div>
                   <p className="mt-1.5 text-xs leading-relaxed text-slate-200">{selectedScenario.tradeOffs}</p>
                   <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-400">
                     {selectedScenario.preventionChecklist.map((p, idx) => (
@@ -450,7 +450,7 @@ export function SystemDesignStudioView({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="glass-surface rounded-2xl p-6 space-y-4 lg:col-span-5">
             <div className="flex items-center gap-2 text-sm font-bold text-white">
-              <Cpu className="h-4 w-4 text-[#A78BFA]" />
+              <Cpu className="h-4 w-4 text-white" />
               <span>Project Deep Dive Generator</span>
             </div>
             <p className="text-xs text-slate-400">
@@ -460,31 +460,31 @@ export function SystemDesignStudioView({
               value={projTitle}
               onChange={(e) => setProjTitle(e.target.value)}
               placeholder="Project Title"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--accent-primary)]"
             />
             <input
               value={projStack}
               onChange={(e) => setProjStack(e.target.value)}
               placeholder="Tech Stack"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--accent-primary)]"
             />
             <input
               value={projScale}
               onChange={(e) => setProjScale(e.target.value)}
               placeholder="Scale & Measurable Impact"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--accent-primary)]"
             />
             <textarea
               rows={4}
               value={projSummary}
               onChange={(e) => setProjSummary(e.target.value)}
               placeholder="Architecture, bottlenecks, and trade-offs..."
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--accent-primary)]"
             />
             <button
               onClick={runProjectDeepDive}
               disabled={deepDiveLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] py-2.5 text-xs font-semibold text-[#07080C] disabled:opacity-60"
+              className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs disabled:opacity-60"
             >
               {deepDiveLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
               <span>{deepDiveLoading ? 'Synthesizing Brief...' : 'Generate Defense Brief'}</span>
@@ -497,7 +497,7 @@ export function SystemDesignStudioView({
               {deepDiveMd && (
                 <button
                   onClick={() => handleSaveNote(`Project Deep Dive: ${projTitle}`, deepDiveMd, 'Behavioral & Projects')}
-                  className="inline-flex items-center gap-1.5 text-xs text-[#2DD4BF] hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-white hover:underline"
                 >
                   <BookmarkPlus className="h-3.5 w-3.5" />
                   <span>Save to Notebook</span>

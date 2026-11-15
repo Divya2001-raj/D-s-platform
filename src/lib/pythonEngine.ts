@@ -2,6 +2,7 @@ export interface PythonTestResult {
   name: string;
   passed: boolean;
   detail: string;
+  hidden?: boolean;
 }
 
 export interface PythonExecutionResponse {
@@ -10,6 +11,14 @@ export interface PythonExecutionResponse {
   stderr: string;
   runtimeMs: number;
   tests: PythonTestResult[];
+  hiddenTests?: PythonTestResult[];
+  hiddenSummary?: {
+    total: number;
+    passed: number;
+    firstFailure?: string;
+  };
+  passedCount: number;
+  totalCount: number;
   allPassed: boolean;
   engineMode: 'pyodide-wasm' | 'fallback';
 }
@@ -109,8 +118,40 @@ class SparkSession:
         return DataFrame(data)
 \`;
 
+async function runTestSuite(pyodide, cases, isHidden) {
+  const results = [];
+  for (const tc of (cases || [])) {
+    try {
+      if (tc.input && (tc.input.includes('assert ') || tc.input.includes(';'))) {
+        await pyodide.runPythonAsync(tc.input);
+        results.push({ name: tc.name || 'Test Case', passed: true, detail: tc.expected || 'Assertion passed', hidden: isHidden });
+      } else if (tc.input && tc.expected) {
+        const evalExpr = \`repr(eval(\${JSON.stringify(tc.input)}))\`;
+        const actualVal = await pyodide.runPythonAsync(evalExpr);
+        const normActual = String(actualVal).trim();
+        const normExp = String(tc.expected).trim();
+        const passed = normActual === normExp;
+        results.push({
+          name: tc.name || 'Test Case',
+          passed,
+          detail: passed ? \`Matched: \${normActual}\` : \`Got \${normActual}, expected \${normExp}\`,
+          hidden: isHidden
+        });
+      }
+    } catch (tcErr) {
+      results.push({
+        name: tc.name || 'Test Case',
+        passed: false,
+        detail: tcErr.message || String(tcErr),
+        hidden: isHidden
+      });
+    }
+  }
+  return results;
+}
+
 self.onmessage = async (event) => {
-  const { id, setupCode, userCode, testCases } = event.data;
+  const { id, setupCode, userCode, testCases, hiddenTestCases } = event.data;
   const start = performance.now();
   try {
     const pyodide = await ensurePyodide();
@@ -125,37 +166,14 @@ self.onmessage = async (event) => {
     }
     await pyodide.runPythonAsync(userCode);
 
-    const testResults = [];
-    for (const tc of (testCases || [])) {
-      try {
-        const harness = \`
-__tc_input__ = \${JSON.stringify(tc.input || '')}
-__tc_expected__ = \${JSON.stringify(tc.expected || '')}
-\${tc.input && tc.input.includes('assert') ? tc.input : ''}
-\`;
-        if (tc.input && tc.input.trim().startsWith('assert')) {
-          await pyodide.runPythonAsync(tc.input);
-          testResults.push({ name: tc.name || 'Test Case', passed: true, detail: 'Assertion passed' });
-        } else if (tc.input && tc.expected) {
-          const evalExpr = \`repr(eval(\${JSON.stringify(tc.input)}))\`;
-          const actualVal = await pyodide.runPythonAsync(evalExpr);
-          const normActual = String(actualVal).trim();
-          const normExp = String(tc.expected).trim();
-          const passed = normActual === normExp;
-          testResults.push({
-            name: tc.name || 'Test Case',
-            passed,
-            detail: passed ? \`Matched: \${normActual}\` : \`Got \${normActual}, expected \${normExp}\`
-          });
-        }
-      } catch (tcErr) {
-        testResults.push({
-          name: tc.name || 'Test Case',
-          passed: false,
-          detail: tcErr.message || String(tcErr)
-        });
-      }
-    }
+    const visibleResults = await runTestSuite(pyodide, testCases, false);
+    const hiddenResults = await runTestSuite(pyodide, hiddenTestCases, true);
+    const combined = [...visibleResults, ...hiddenResults];
+
+    const passedCount = combined.filter(t => t.passed).length;
+    const totalCount = combined.length;
+    const hiddenPassedCount = hiddenResults.filter(t => t.passed).length;
+    const firstHiddenFail = hiddenResults.find(t => !t.passed);
 
     self.postMessage({
       id,
@@ -163,8 +181,16 @@ __tc_expected__ = \${JSON.stringify(tc.expected || '')}
       stdout: stdoutLines.join('\\n'),
       stderr: stderrLines.join('\\n'),
       runtimeMs: Number((performance.now() - start).toFixed(1)),
-      tests: testResults,
-      allPassed: testResults.length === 0 ? true : testResults.every(t => t.passed),
+      tests: visibleResults,
+      hiddenTests: hiddenResults,
+      hiddenSummary: hiddenResults.length > 0 ? {
+        total: hiddenResults.length,
+        passed: hiddenPassedCount,
+        firstFailure: firstHiddenFail ? \`\${firstHiddenFail.name}: \${firstHiddenFail.detail}\` : undefined
+      } : undefined,
+      passedCount,
+      totalCount,
+      allPassed: totalCount > 0 ? passedCount === totalCount : true,
       engineMode: 'pyodide-wasm'
     });
   } catch (err) {
@@ -175,6 +201,9 @@ __tc_expected__ = \${JSON.stringify(tc.expected || '')}
       stderr: err.message || String(err),
       runtimeMs: Number((performance.now() - start).toFixed(1)),
       tests: [],
+      hiddenTests: [],
+      passedCount: 0,
+      totalCount: (testCases?.length || 0) + (hiddenTestCases?.length || 0),
       allPassed: false,
       engineMode: 'pyodide-wasm'
     });
@@ -197,6 +226,7 @@ export async function executePythonInWorker(params: {
   setupCode: string;
   userCode: string;
   testCases: Array<{ name: string; input: string; expected: string }>;
+  hiddenTestCases?: Array<{ name: string; input: string; expected: string }>;
   timeoutMs?: number;
 }): Promise<PythonExecutionResponse> {
   const id = Math.random().toString(36).slice(2);
@@ -216,6 +246,9 @@ export async function executePythonInWorker(params: {
         stderr: `Execution timed out after ${timeoutMs / 1000}s (possible infinite loop or slow Pyodide CDN download).`,
         runtimeMs: timeoutMs,
         tests: [],
+        hiddenTests: [],
+        passedCount: 0,
+        totalCount: (params.testCases?.length || 0) + (params.hiddenTestCases?.length || 0),
         allPassed: false,
         engineMode: 'pyodide-wasm',
       });
@@ -234,6 +267,7 @@ export async function executePythonInWorker(params: {
       setupCode: params.setupCode,
       userCode: params.userCode,
       testCases: params.testCases,
+      hiddenTestCases: params.hiddenTestCases ?? [],
     });
   });
 }

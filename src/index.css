@@ -6,13 +6,72 @@
     --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-sans: 'DM Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Light Mode — Soft Lavender-Mist Canvas & Pure White Bento Cards */
+    --bg-canvas: #F6F4FA;
+    --bg-card: #FFFFFF;
+    --bg-inset: #F1ECF9;
+    --bg-pill-unselected: #EBE5F6;
+    --bg-track: #E6E0F4;
+    --bg-header: rgba(246, 244, 250, 0.92);
+    --border-subtle: #E5DFEF;
+    --border-strong: #C4B5FD;
+    --text-primary: #13111C;
+    --text-heading: #13111C;
+    --text-secondary: #5E5873;
+    --text-muted: #7B7490;
+    --accent-primary: #7C3AED;
+    --accent-primary-fg: #FFFFFF;
+    --accent-hover: #6D28D9;
+    --accent-highlight: #7C3AED;
+    --accent-soft: #8B5CF6;
+    --accent-orchid: #D946EF;
+    --accent-secondary-bg: #F1ECF9;
+    --accent-secondary-border: #DDD6FE;
+    --accent-pass: #22C55E;
+    --accent-fail: #EF4444;
+    --card-shadow: 0 12px 30px rgba(18, 16, 22, 0.07);
+    --glow-borahae: 0 8px 24px rgba(124, 58, 237, 0.25);
+  }
+
+  .dark {
+    /* Dark Mode (Default) — BTS "Borahae" Purple & Velvet Obsidian */
+    --bg-canvas: #121016;
+    --bg-card: #1E1B24;
+    --bg-inset: #282430;
+    --bg-pill-unselected: #282430;
+    --bg-track: #322E3D;
+    --bg-header: rgba(18, 16, 22, 0.92);
+    --border-subtle: #2D2936;
+    --border-strong: #453C57;
+    --text-primary: #FFFFFF;
+    --text-heading: #FFFFFF;
+    --text-secondary: #A19DB0;
+    --text-muted: #6E6A7C;
+    --accent-primary: #8B5CF6;
+    --accent-primary-fg: #FFFFFF;
+    --accent-hover: #7C3AED;
+    --accent-highlight: #A78BFA;
+    --accent-soft: #C4B5FD;
+    --accent-orchid: #D946EF;
+    --accent-secondary-bg: #282430;
+    --accent-secondary-border: #2D2936;
+    --accent-pass: #22C55E;
+    --accent-fail: #EF4444;
+    --card-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    --glow-borahae: 0 0 24px rgba(139, 92, 246, 0.45);
   }
 
   html {
     font-family: var(--font-sans);
-    background-color: #07080C;
-    color: #F1F5F9;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
   }
 
   h1, h2, h3, h4, .font-display {
@@ -26,32 +85,257 @@
   }
 }
 
-/* Midnight Aurora & Editorial Obsidian Surfaces */
+/* Velvet Obsidian / Soft Lavender-Mist Outer Bento Canvas */
 .aurora-canvas {
-  background-color: #07080C;
-  background-image:
-    radial-gradient(ellipse 80% 45% at 50% -10%, rgba(45, 212, 191, 0.12), transparent 65%),
-    radial-gradient(ellipse 65% 40% at 85% 0%, rgba(129, 140, 248, 0.11), transparent 60%);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
 }
 
+/* Matte Dark Charcoal (#1E1B24) Bento Cards (or Pure White in Light Mode) */
 .glass-surface {
-  background: rgba(16, 18, 26, 0.80);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
-  transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--card-shadow);
+  border-radius: 22px;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.glass-surface.rounded-none {
+  border-radius: 0;
 }
 
 .glass-surface-hover:hover {
-  border-color: rgba(45, 212, 191, 0.32);
+  border-color: var(--border-strong);
+}
+
+.inset-surface {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Signature BTS "Borahae" Royal Purple -> Violet -> Orchid-Magenta Gradient Tokens */
+.gradient-luminous {
+  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 52%, #E879F9 100%);
+  color: #FFFFFF;
+  box-shadow: var(--glow-borahae);
+}
+
+.gradient-violet {
+  background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 48%, #D946EF 100%);
+  color: #FFFFFF;
+  box-shadow: var(--glow-borahae);
+}
+
+/* Borahae Primary CTAs & Luminous Capsule Buttons */
+.btn-primary,
+.btn-terracotta,
+.btn-crimson {
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+  font-weight: 700;
+  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+}
+.btn-primary:hover:not(:disabled),
+.btn-terracotta:hover:not(:disabled),
+.btn-crimson:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  box-shadow: var(--glow-borahae);
+}
+
+.btn-luminous {
+  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 52%, #E879F9 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: var(--glow-borahae);
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+}
+.btn-luminous:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 0 28px rgba(168, 85, 247, 0.55);
+}
+
+.btn-secondary {
+  background-color: var(--accent-secondary-bg);
+  border: 1px solid var(--accent-secondary-border);
+  color: var(--text-primary);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+}
+
+/* Active Tab / Pill Row Borahae Gradient State */
+.tab-active {
+  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 52%, #E879F9 100%);
+  color: #FFFFFF !important;
+  font-weight: 700;
+  box-shadow: var(--glow-borahae);
+}
+
+/* Active Dock Squircle — Glowing Borahae Gradient with High-Contrast Dark Icon */
+.borahae-squircle-active {
+  background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 48%, #D946EF 100%);
+  color: #121016 !important;
+  box-shadow: var(--glow-borahae);
+}
+.borahae-squircle-active * {
+  color: #121016 !important;
+}
+
+/* Mint Emerald Pass / Action Pill */
+.pill-pass-solid {
+  background-color: #22C55E;
+  color: #121016 !important;
+  font-weight: 700;
+  transition: filter 150ms ease, transform 150ms ease;
+}
+.pill-pass-solid:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Custom sleek scrollbars */
+.botanical-divider,
+.bento-divider {
+  border-color: #2D2936;
+}
+
+html:not(.dark) .botanical-divider,
+html:not(.dark) .bento-divider {
+  border-color: #E5DFEF;
+}
+
+/* Dark Mode Cool Lavender-Gray & Velvet Charcoal Adaptation */
+.dark .text-slate-300 {
+  color: #D4D0E0;
+}
+.dark .text-slate-400 {
+  color: #A19DB0;
+}
+.dark .text-slate-500 {
+  color: #6E6A7C;
+}
+.dark .bg-\[\#07080C\],
+.dark .bg-\[\#07080C\]\/90,
+.dark .bg-\[\#07080C\]\/85,
+.dark .bg-\[\#07080C\]\/80,
+.dark .bg-\[\#07080C\]\/75,
+.dark .bg-\[\#07080C\]\/70,
+.dark .bg-\[\#07080C\]\/60,
+.dark .bg-\[\#07080C\]\/95,
+.dark .bg-\[\#10121A\],
+.dark .bg-\[\#10121A\]\/80,
+.dark .bg-\[\#10121A\]\/70,
+.dark .bg-\[\#10121A\]\/60,
+.dark .bg-\[\#10121A\]\/95,
+.dark .bg-\[\#0B120E\],
+.dark .bg-\[\#12090D\],
+.dark .bg-\[\#0E1712\] {
+  background-color: #282430;
+}
+.dark .border-white\/10,
+.dark .border-white\/15,
+.dark .border-white\/\[0\.08\],
+.dark .border-white\/\[0\.06\],
+.dark .divide-white\/\[0\.06\] > :not(:last-child) {
+  border-color: #2D2936;
+}
+
+/* Light Mode Soft Lavender-Mist & Pure White Adaptation */
+html:not(.dark) .text-white {
+  color: #13111C;
+}
+html:not(.dark) .text-slate-100,
+html:not(.dark) .text-slate-200 {
+  color: #13111C;
+}
+html:not(.dark) .text-slate-300 {
+  color: #3B354D;
+}
+html:not(.dark) .text-slate-400,
+html:not(.dark) .text-slate-500,
+html:not(.dark) .text-slate-600 {
+  color: #5E5873;
+}
+html:not(.dark) .bg-\[\#07080C\],
+html:not(.dark) .bg-\[\#07080C\]\/90,
+html:not(.dark) .bg-\[\#07080C\]\/85,
+html:not(.dark) .bg-\[\#07080C\]\/80,
+html:not(.dark) .bg-\[\#07080C\]\/75,
+html:not(.dark) .bg-\[\#07080C\]\/70,
+html:not(.dark) .bg-\[\#07080C\]\/60,
+html:not(.dark) .bg-\[\#07080C\]\/95,
+html:not(.dark) .bg-\[\#10121A\],
+html:not(.dark) .bg-\[\#10121A\]\/80,
+html:not(.dark) .bg-\[\#10121A\]\/70,
+html:not(.dark) .bg-\[\#10121A\]\/60,
+html:not(.dark) .bg-\[\#10121A\]\/95,
+html:not(.dark) .bg-\[\#12090D\],
+html:not(.dark) .bg-\[\#0E1712\],
+html:not(.dark) .bg-\[\#0B120E\],
+html:not(.dark) .bg-black\/20,
+html:not(.dark) .bg-black\/25 {
+  background-color: #F1ECF9;
+}
+html:not(.dark) .border-white\/10,
+html:not(.dark) .border-white\/15,
+html:not(.dark) .border-white\/\[0\.08\],
+html:not(.dark) .border-white\/\[0\.06\],
+html:not(.dark) .divide-white\/\[0\.06\] > :not(:last-child) {
+  border-color: #E5DFEF;
+}
+html:not(.dark) .bg-white\/5,
+html:not(.dark) .bg-white\/10,
+html:not(.dark) .bg-white\/15,
+html:not(.dark) .bg-white\/\[0\.02\],
+html:not(.dark) .bg-white\/\[0\.03\],
+html:not(.dark) .bg-white\/\[0\.04\] {
+  background-color: #F1ECF9;
+}
+html:not(.dark) .hover\:bg-white\/5:hover,
+html:not(.dark) .hover\:bg-white\/10:hover,
+html:not(.dark) .hover\:bg-white\/15:hover,
+html:not(.dark) .hover\:bg-white\/\[0\.02\]:hover,
+html:not(.dark) .hover\:bg-white\/\[0\.03\]:hover,
+html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: #E7DFF6;
+}
+html:not(.dark) .hover\:text-white:hover {
+  color: #13111C;
+}
+html:not(.dark) .prose-invert {
+  color: #1E1B24;
+  --tw-prose-body: #1E1B24;
+  --tw-prose-headings: #13111C;
+  --tw-prose-strong: #13111C;
+  --tw-prose-code: #7C3AED;
+  --tw-prose-pre-bg: #F1ECF9;
+  --tw-prose-pre-code: #13111C;
+}
+
+/* Guarantee High-Contrast White Text Inside Borahae Gradient CTAs & Active Pills in Both Modes */
+.btn-primary,
+.btn-primary *,
+.btn-luminous,
+.btn-luminous *,
+.btn-crimson,
+.btn-crimson *,
+.btn-terracotta,
+.btn-terracotta *,
+.gradient-luminous,
+.gradient-luminous *,
+.gradient-violet,
+.gradient-violet *,
+.tab-active,
+.tab-active *,
+.keep-white,
+.keep-white * {
+  color: #FFFFFF !important;
+}
+
+/* Custom Sleek Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -60,11 +344,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.22);
+  background: rgba(161, 157, 176, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(45, 212, 191, 0.45);
+  background: rgba(139, 92, 246, 0.7);
 }
 
 /* 3D Flip Card Utilities */

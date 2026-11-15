@@ -12,6 +12,8 @@ interface CopilotDrawerProps {
   messages: CopilotMessage[];
   onSendUserTurn: (userMsg: string, assistantMsg: string, contextLabel: string) => void;
   onSaveToNotebook: (title: string, content: string, topic: string) => Promise<void>;
+  floatingDock?: React.ReactNode;
+  showFloatingBar?: boolean;
 }
 
 export function CopilotDrawer({
@@ -21,6 +23,8 @@ export function CopilotDrawer({
   messages,
   onSendUserTurn,
   onSaveToNotebook,
+  floatingDock,
+  showFloatingBar = true,
 }: CopilotDrawerProps) {
   const [input, setInput] = useState('');
   const [streamingText, setStreamingText] = useState('');
@@ -122,17 +126,26 @@ export function CopilotDrawer({
 
   return (
     <>
-      <button
-        onClick={onToggle}
-        className="fixed right-6 bottom-6 z-40 inline-flex items-center gap-2.5 rounded-2xl border border-[#A78BFA]/40 bg-[#10121A]/95 px-4 py-3 text-sm font-semibold text-white shadow-2xl shadow-[#818CF8]/20 backdrop-blur-xl transition-transform hover:scale-[1.02] hover:border-[#2DD4BF]/60"
-        title="Open Gemini AI Copilot (Cmd+J)"
-      >
-        <Sparkles className="h-4 w-4 text-[#A78BFA]" />
-        <span className="whitespace-nowrap">AI Copilot</span>
-        <span className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-slate-400">
-          ⌘J
-        </span>
-      </button>
+      {showFloatingBar && !open && (
+        <div
+          data-bento-dock-bar="true"
+          className="fixed right-4 bottom-4 z-40 flex items-center gap-2.5 overflow-visible sm:right-6 sm:bottom-6 sm:gap-3"
+        >
+          {floatingDock}
+          <button
+            type="button"
+            onClick={onToggle}
+            className="btn-luminous inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl px-4 text-xs font-bold transition-transform hover:scale-[1.02] sm:h-14 sm:gap-2.5 sm:px-5 sm:text-sm"
+            title="Open Gemini AI Copilot (Cmd+J)"
+          >
+            <Sparkles className="h-4 w-4 shrink-0" />
+            <span className="whitespace-nowrap">AI Copilot</span>
+            <span className="rounded-md border border-white/30 bg-white/10 px-1.5 py-0.5 font-mono text-[11px]">
+              ⌘J
+            </span>
+          </button>
+        </div>
+      )}
 
       <AnimatePresence>
         {open && (
@@ -141,11 +154,11 @@ export function CopilotDrawer({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0.6 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-0 right-0 z-50 flex h-full w-full max-w-lg flex-col border-l border-white/10 bg-[#07080C]/95 shadow-2xl backdrop-blur-2xl"
+            className="fixed top-0 right-0 z-50 flex h-full w-full max-w-lg flex-col border-l border-[var(--border-subtle)] bg-[var(--bg-canvas)]/95 shadow-2xl backdrop-blur-2xl"
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#A78BFA]/15 text-[#A78BFA]">
+                <div className="inset-surface flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white">
                   <Bot className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
@@ -164,13 +177,13 @@ export function CopilotDrawer({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 border-b border-white/10 px-5 py-3">
+            <div className="flex flex-wrap gap-1.5 border-b border-[var(--border-subtle)] px-5 py-3">
               {quickChips.map((chip) => (
                 <button
                   key={chip.label}
                   disabled={loading}
                   onClick={() => sendPrompt(chip.prompt, chip.mode)}
-                  className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-[#A78BFA]/50 hover:text-white disabled:opacity-50"
+                  className="btn-secondary rounded-lg px-2.5 py-1.5 text-xs font-medium disabled:opacity-50"
                 >
                   {chip.label}
                 </button>
@@ -179,7 +192,7 @@ export function CopilotDrawer({
 
             <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
               {messages.length === 0 && !pendingUserMsg && (
-                <div className="rounded-xl border border-white/10 bg-[#10121A]/70 p-4 text-sm text-slate-300">
+                <div className="inset-surface rounded-xl p-4 text-sm text-slate-300">
                   <p className="font-semibold text-white">Live Workspace Context Connected</p>
                   <p className="mt-1 text-xs leading-relaxed text-slate-400">
                     I automatically see your active screen ({context.view}), code/SQL editor contents, schema, and latest
@@ -196,12 +209,12 @@ export function CopilotDrawer({
                   <div
                     className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm ${
                       m.role === 'user'
-                        ? 'bg-gradient-to-r from-[#2DD4BF]/20 to-[#818CF8]/20 border border-[#2DD4BF]/30 text-white'
+                        ? 'inset-surface border-[var(--border-strong)] text-white'
                         : 'glass-surface text-slate-200'
                     }`}
                   >
                     {m.role === 'assistant' ? (
-                      <div className="prose prose-invert prose-sm max-w-none prose-pre:rounded-xl prose-pre:bg-[#07080C] prose-pre:border prose-pre:border-white/10 prose-code:text-[#2DD4BF]">
+                      <div className="prose prose-invert prose-sm max-w-none prose-pre:rounded-xl prose-pre:bg-[var(--bg-inset)] prose-pre:border prose-pre:border-[var(--border-subtle)] prose-code:text-white">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                       </div>
                     ) : (
@@ -211,12 +224,12 @@ export function CopilotDrawer({
                   {m.role === 'assistant' && (
                     <button
                       onClick={() => handleSave(m.id, m.content)}
-                      className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-[#2DD4BF]"
+                      className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-white"
                     >
                       {savedId === m.id ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-[#34D399]" />
-                          <span className="text-[#34D399]">Saved to Personal Answer Notebook</span>
+                          <Check className="h-3.5 w-3.5 text-white" />
+                          <span className="text-white">Saved to Personal Answer Notebook</span>
                         </>
                       ) : (
                         <>
@@ -231,7 +244,7 @@ export function CopilotDrawer({
 
               {pendingUserMsg && (
                 <div className="flex flex-col items-end">
-                  <div className="max-w-[92%] rounded-2xl border border-[#2DD4BF]/30 bg-gradient-to-r from-[#2DD4BF]/20 to-[#818CF8]/20 px-4 py-3 text-sm text-white">
+                  <div className="inset-surface max-w-[92%] rounded-2xl border-[var(--border-strong)] px-4 py-3 text-sm text-white">
                     {pendingUserMsg}
                   </div>
                 </div>
@@ -240,11 +253,11 @@ export function CopilotDrawer({
               {loading && (
                 <div className="glass-surface max-w-[92%] rounded-2xl px-4 py-3 text-sm text-slate-200">
                   {streamingText ? (
-                    <div className="prose prose-invert prose-sm max-w-none prose-pre:rounded-xl prose-pre:bg-[#07080C] prose-code:text-[#2DD4BF]">
+                    <div className="prose prose-invert prose-sm max-w-none prose-pre:rounded-xl prose-pre:bg-[var(--bg-inset)] prose-code:text-white">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamingText}</ReactMarkdown>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-xs text-[#A78BFA]">
+                    <div className="flex items-center gap-2 text-xs text-slate-300">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       <span>Analyzing workspace context...</span>
                     </div>
@@ -258,9 +271,9 @@ export function CopilotDrawer({
                 e.preventDefault();
                 sendPrompt(input, 'coach');
               }}
-              className="border-t border-white/10 p-4"
+              className="border-t border-[var(--border-subtle)] p-4"
             >
-              <div className="flex items-end gap-2 rounded-xl border border-white/10 bg-[#10121A] p-2 focus-within:border-[#2DD4BF]/50">
+              <div className="inset-surface flex items-end gap-2 rounded-xl p-2 focus-within:border-[var(--border-strong)]">
                 <textarea
                   rows={2}
                   value={input}
@@ -277,7 +290,7 @@ export function CopilotDrawer({
                 <button
                   type="submit"
                   disabled={loading || !input.trim()}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] text-[#07080C] transition-opacity hover:opacity-95 disabled:opacity-40"
+                  className="btn-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-lg disabled:opacity-40"
                   aria-label="Send message to AI Copilot"
                 >
                   <Send className="h-4 w-4" />

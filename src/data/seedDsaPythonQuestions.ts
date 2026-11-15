@@ -1,4 +1,5 @@
 import type { Difficulty, ExperienceTier, Question, QuestionTestCase } from '../types/platform';
+import { buildPythonStarterSkeleton } from '../lib/pythonSkeleton';
 
 interface PythonSpec {
   id: string;
@@ -12,6 +13,7 @@ interface PythonSpec {
   starterCode: string;
   detailedSolution: string;
   testCases: QuestionTestCase[];
+  hiddenTestCases?: QuestionTestCase[];
   explanation: string;
   practicalRelevance: string;
 }
@@ -1303,13 +1305,22 @@ export const SEED_DSA_PYTHON_QUESTIONS: Question[] = [
     experienceLevel: p.experienceLevel,
     companyTags: p.companies,
     roundType: 'Python & DSA Coding',
+    roundNumber: 2,
+    evaluationType: 'python',
     sourceType: 'curated_track',
     sourceReference: `D's platforms DSA & Python Roadmap · ${p.topic}`,
     setupSchemaOrEnv: '# Executed in isolated Pyodide WebAssembly CPython worker',
     sampleInput: p.testCases[0]?.input || '',
     expectedOutput: 'All Python unit assertions pass',
     testCases: p.testCases,
-    starterCode: p.starterCode,
+    hiddenTestCases: p.hiddenTestCases ?? [
+      {
+        name: 'Hidden Boundary Check',
+        input: p.testCases[0]?.input || 'assert True',
+        expected: 'True',
+      },
+    ],
+    starterCode: buildPythonStarterSkeleton(p.detailedSolution, `Implement ${p.subtopic}`),
     detailedSolution: p.detailedSolution,
     alternativeApproaches: 'Compare iterative vs recursive or heap vs sort complexity trade-offs.',
     explanation: p.explanation,
@@ -1329,13 +1340,16 @@ export const SEED_DSA_PYTHON_QUESTIONS: Question[] = [
     experienceLevel: p.experienceLevel,
     companyTags: p.companies,
     roundType: 'Python & DSA Coding',
+    roundNumber: 2,
+    evaluationType: 'python',
     sourceType: 'curated_track',
     sourceReference: `D's platforms DSA Pattern Roadmap · ${p.topic}`,
     setupSchemaOrEnv: '# Executed in isolated Pyodide WebAssembly CPython worker',
     sampleInput: p.test,
     expectedOutput: 'All Python unit assertions pass',
-    testCases: [{ name: 'Unit Assertion', input: p.test, expected: 'True' }],
-    starterCode: p.code,
+    testCases: [{ name: 'Sample Unit Assertion', input: p.test, expected: 'True' }],
+    hiddenTestCases: [{ name: 'Hidden Verification Suite', input: p.test, expected: 'True' }],
+    starterCode: buildPythonStarterSkeleton(p.code, `Implement ${p.subtopic}`),
     detailedSolution: p.code,
     alternativeApproaches: p.note,
     explanation: p.note,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Building2, CheckCircle2, Plus, Search, ShieldCheck, X } from 'lucide-react';
+import { ArrowRight, Building2, CheckCircle2, ExternalLink, Plus, Search, ShieldCheck, X } from 'lucide-react';
 import type {
   CompanyPortal,
   Difficulty,
@@ -17,6 +17,7 @@ interface CompanyHubsViewProps {
   experiences: InterviewExperience[];
   experienceTier: ExperienceTier;
   onSelectQuestion: (q: Question) => void;
+  onSelectTopic: (topicNameOrId: string) => void;
   onAddGeneratedQuestions: (qs: Question[]) => Promise<void>;
   onSubmitExperience: (exp: Omit<InterviewExperience, 'id' | 'authorId' | 'verificationStatus'>) => Promise<void>;
 }
@@ -29,6 +30,7 @@ export function CompanyHubsView({
   experiences,
   experienceTier,
   onSelectQuestion,
+  onSelectTopic,
   onAddGeneratedQuestions,
   onSubmitExperience,
 }: CompanyHubsViewProps) {
@@ -120,16 +122,16 @@ export function CompanyHubsView({
               value={companySearch}
               onChange={(e) => setCompanySearch(e.target.value)}
               placeholder="Search 24 Tier-1 companies or tech..."
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] py-2 pr-3 pl-9 text-xs text-white placeholder-slate-500 outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl py-2 pr-3 pl-9 text-xs text-white placeholder-slate-500 outline-none focus:border-[var(--border-strong)]"
             />
           </div>
-          <div className="flex rounded-xl border border-white/10 bg-[#07080C] p-0.5 text-xs">
+          <div className="inset-surface flex rounded-xl p-0.5 text-xs">
             {(['All', 'Global', 'India'] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setRegionFilter(r)}
                 className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
-                  regionFilter === r ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
+                  regionFilter === r ? 'tab-active' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {r}
@@ -152,12 +154,12 @@ export function CompanyHubsView({
               onClick={() => onSelectCompany(c.id)}
               className={`shrink-0 rounded-xl border px-4 py-2.5 text-left transition-all ${
                 active
-                  ? 'border-[#2DD4BF]/60 bg-[#2DD4BF]/12 text-white'
-                  : 'border-white/10 bg-[#10121A]/80 text-slate-300 hover:border-white/25'
+                  ? 'tab-active border-transparent'
+                  : 'inset-surface text-slate-300 hover:border-[var(--border-strong)]'
               }`}
             >
               <div className="font-display text-sm font-bold whitespace-nowrap">{c.name}</div>
-              <div className="text-[11px] text-slate-400 whitespace-nowrap">{c.region}</div>
+              <div className={`text-[11px] whitespace-nowrap ${active ? 'opacity-75' : 'text-slate-400'}`}>{c.region}</div>
             </button>
           );
         })}
@@ -168,7 +170,7 @@ export function CompanyHubsView({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 text-xs text-slate-400">
-              <Building2 className="h-3.5 w-3.5 text-[#FBBF24]" />
+              <Building2 className="h-3.5 w-3.5 text-white" />
               <span>{activeCompany.tierLabel}</span>
               <span aria-hidden="true">·</span>
               <span>{activeCompany.region}</span>
@@ -180,13 +182,25 @@ export function CompanyHubsView({
               {activeCompany.interviewPhilosophy}
             </p>
             <p className="mt-2 text-xs text-slate-400">
-              <span className="font-semibold text-slate-200">Core Stack:</span>{' '}
+              <span className="font-semibold text-white">Core Stack:</span>{' '}
               {activeCompany.primaryStack.join(' · ')}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              <span className="font-semibold text-slate-200">Bar Calibration:</span>{' '}
+              <span className="font-semibold text-white">Bar Calibration:</span>{' '}
               {activeCompany.barExpectation}
             </p>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-semibold text-slate-300">Key Topics:</span>
+              {activeCompany.topTopics.map((tp) => (
+                <button
+                  key={tp}
+                  onClick={() => onSelectTopic(tp)}
+                  className="btn-secondary rounded-lg px-2.5 py-1 text-xs font-medium"
+                >
+                  {tp}
+                </button>
+              ))}
+            </div>
           </div>
 
           <GenerateBatchButton
@@ -196,6 +210,7 @@ export function CompanyHubsView({
             company={activeCompany.name}
             experienceLevel={experienceTier}
             roundType="SQL Coding"
+            excludeTitles={questions.map((q) => q.title)}
             onGenerated={onAddGeneratedQuestions}
           />
         </div>
@@ -203,8 +218,8 @@ export function CompanyHubsView({
         {/* Interview Rounds Breakdown */}
         <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
           {activeCompany.rounds.map((r) => (
-            <div key={r.roundNumber} className="rounded-xl border border-white/10 bg-[#07080C]/70 p-4">
-              <div className="flex items-center justify-between font-mono text-xs text-[#2DD4BF]">
+            <div key={r.roundNumber} className="inset-surface rounded-xl p-4">
+              <div className="flex items-center justify-between font-mono text-xs text-slate-400">
                 <span>Round {r.roundNumber}</span>
                 <span>{r.durationMins}m</span>
               </div>
@@ -237,25 +252,42 @@ export function CompanyHubsView({
               </p>
             ) : (
               companyQuestions.map((q) => (
-                <button
+                <div
                   key={q.uniqueId}
-                  onClick={() => onSelectQuestion(q)}
-                  className="flex w-full items-center justify-between py-3 text-left transition-colors hover:bg-white/[0.02] px-2 rounded-lg"
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-3 transition-colors hover:bg-white/[0.02]"
                 >
-                  <div className="min-w-0 pr-3">
-                    <div className="truncate text-sm font-medium text-white">{q.title}</div>
+                  <button
+                    onClick={() => onSelectQuestion(q)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="truncate text-sm font-medium text-white hover:underline">{q.title}</div>
                     <div className="mt-0.5 truncate text-xs text-slate-400">
-                      {q.domain} · {q.topic} ·{' '}
-                      <span className={q.sourceType === 'ai_generated_practice' ? 'text-[#A78BFA]' : 'text-[#2DD4BF]'}>
-                        {q.sourceType === 'ai_generated_practice' ? 'AI-Generated Practice' : 'Curated Track'}
+                      {q.askedContext || `${q.domain} · ${q.topic}`} ·{' '}
+                      <span className="font-medium text-slate-300">
+                        {q.sourceType === 'ai_generated_practice' ? 'AI-Generated Practice' : 'Verified Loop'}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
+                  </button>
+                  <div className="flex shrink-0 items-center gap-2.5">
                     <span className="font-mono text-xs text-slate-300">{q.difficulty}</span>
-                    <ArrowRight className="h-4 w-4 text-slate-500" />
+                    <a
+                      href={`/problem/${encodeURIComponent(q.uniqueId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Open in New Tab"
+                      className="btn-secondary rounded-lg p-1.5 text-slate-400 hover:text-white"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                    <button
+                      onClick={() => onSelectQuestion(q)}
+                      className="text-slate-400 hover:text-white"
+                      aria-label={`Open ${q.title}`}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>
@@ -271,7 +303,7 @@ export function CompanyHubsView({
             </div>
             <button
               onClick={() => setShowExpModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+              className="btn-secondary inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Share Experience</span>
@@ -285,14 +317,14 @@ export function CompanyHubsView({
               </p>
             ) : (
               companyExperiences.map((exp) => (
-                <div key={exp.id} className="rounded-xl border border-white/10 bg-[#07080C]/70 p-4">
+                <div key={exp.id} className="inset-surface rounded-xl p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-sm font-semibold text-white">
                       {exp.position} · {exp.experience}
                     </div>
                     <span
                       className={`inline-flex items-center gap-1 font-mono text-[11px] ${
-                        exp.verificationStatus === 'verified' ? 'text-[#34D399]' : 'text-[#FBBF24]'
+                        exp.verificationStatus === 'verified' ? 'font-semibold text-white' : 'text-slate-400'
                       }`}
                     >
                       {exp.verificationStatus === 'verified' ? (
@@ -308,8 +340,8 @@ export function CompanyHubsView({
                   </div>
                   <div className="mt-3 space-y-2">
                     {exp.roundsDetail.map((rd, idx) => (
-                      <div key={idx} className="rounded-lg border border-white/5 bg-white/[0.02] p-2.5 text-xs">
-                        <div className="font-semibold text-[#2DD4BF]">{rd.roundName}</div>
+                      <div key={idx} className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-2.5 text-xs">
+                        <div className="font-semibold text-white">{rd.roundName}</div>
                         <p className="mt-0.5 text-slate-300">{rd.summary}</p>
                         {rd.questionsAsked.length > 0 && (
                           <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-slate-400">
@@ -356,25 +388,25 @@ export function CompanyHubsView({
                 onChange={(e) => setExpRole(e.target.value)}
                 placeholder="Position (e.g. Senior DE)"
                 required
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               />
               <input
                 value={expYears}
                 onChange={(e) => setExpYears(e.target.value)}
                 placeholder="Experience (e.g. 4-6 yrs)"
                 required
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               />
               <input
                 value={expLocation}
                 onChange={(e) => setExpLocation(e.target.value)}
                 placeholder="Location"
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               />
               <select
                 value={expDiff}
                 onChange={(e) => setExpDiff(e.target.value as Difficulty)}
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               >
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
@@ -386,13 +418,13 @@ export function CompanyHubsView({
               onChange={(e) => setExpRound(e.target.value)}
               placeholder="Round Name (e.g. Streaming System Design)"
               required
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <input
               value={expTech}
               onChange={(e) => setExpTech(e.target.value)}
               placeholder="Technologies Tested (e.g. Spark, Kafka, Iceberg)"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <textarea
               rows={3}
@@ -400,27 +432,27 @@ export function CompanyHubsView({
               value={expSummary}
               onChange={(e) => setExpSummary(e.target.value)}
               placeholder="Round summary & bar expectations..."
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <textarea
               rows={2}
               value={expQuestions}
               onChange={(e) => setExpQuestions(e.target.value)}
               placeholder="Key questions asked (one per line)..."
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowExpModal(false)}
-                className="rounded-xl border border-white/10 px-4 py-2 text-xs text-slate-300"
+                className="btn-secondary rounded-xl px-4 py-2 text-xs"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-xl bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] px-4 py-2 text-xs font-semibold text-[#07080C]"
+                className="btn-primary rounded-xl px-4 py-2 text-xs font-semibold"
               >
                 {submitting ? 'Submitting...' : 'Submit for Moderation'}
               </button>

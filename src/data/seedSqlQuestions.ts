@@ -10,6 +10,7 @@ interface SqlBlueprint {
   companies: string[];
   problemStatement: string;
   setupSql: string;
+  adversarialSetupSql?: string;
   starterCode: string;
   solutionSql: string;
   alternativeApproaches: string;
@@ -38,20 +39,13 @@ INSERT INTO employees VALUES
   (104, 'Noah', 1, 160000), (105, 'Zara', 1, 145000),
   (201, 'Elena', 2, 210000), (202, 'Rohan', 2, 195000), (203, 'Chloe', 2, 180000), (204, 'Vikram', 2, 165000),
   (301, 'Nia', 3, 150000), (302, 'Dev', 3, 140000);`,
-    starterCode: `-- Return dept_name, emp_name, salary for top 3 unique salaries per department
-WITH ranked AS (
-  SELECT
-    d.dept_name,
-    e.emp_name,
-    e.salary,
-    DENSE_RANK() OVER (PARTITION BY e.dept_id ORDER BY e.salary DESC) AS rnk
-  FROM employees e
-  JOIN departments d ON e.dept_id = d.dept_id
-)
-SELECT dept_name, emp_name, salary
-FROM ranked
-WHERE rnk <= 3
-ORDER BY dept_name ASC, salary DESC, emp_name ASC;`,
+    adversarialSetupSql: `INSERT INTO departments VALUES (4, 'Empty Dept');
+INSERT INTO employees VALUES (106, 'Kiran', 1, 185000), (107, 'NullDept', NULL, 250000);`,
+    starterCode: `-- Return: dept_name, emp_name, salary
+-- Tables: departments(dept_id, dept_name), employees(emp_id, emp_name, dept_id, salary)
+SELECT
+  -- TODO: rank distinct salaries per department
+;`,
     solutionSql: `WITH ranked AS (
   SELECT
     d.dept_name,
@@ -98,27 +92,21 @@ INSERT INTO pipeline_runs VALUES
   (9, 'etl_clicks', '2026-01-11', 'SUCCESS'),
   (10, 'etl_clicks', '2026-01-12', 'SUCCESS'),
   (11, 'etl_clicks', '2026-01-13', 'SUCCESS');`,
-    starterCode: `WITH daily_success AS (
+    adversarialSetupSql: `INSERT INTO pipeline_runs VALUES
+  (12, 'etl_orders', '2026-01-08', 'SUCCESS'),
+  (13, 'etl_orders', '2026-01-08', 'FAILED'),
+  (14, 'etl_clicks', '2026-01-13', 'SUCCESS'),
+  (15, 'etl_nulls', NULL, 'SUCCESS');`,
+    starterCode: `-- Return: pipeline_id, streak_start, streak_end, streak_days (streaks >= 3 consecutive days)
+-- Table: pipeline_runs(run_id, pipeline_id, run_date, status)
+WITH daily_success AS (
   SELECT DISTINCT pipeline_id, run_date
   FROM pipeline_runs
-  WHERE status = 'SUCCESS'
-),
-grouped AS (
-  SELECT
-    pipeline_id,
-    run_date,
-    date(run_date, '-' || ROW_NUMBER() OVER (PARTITION BY pipeline_id ORDER BY run_date) || ' days') AS island_key
-  FROM daily_success
+  WHERE status = 'SUCCESS' AND run_date IS NOT NULL
 )
 SELECT
-  pipeline_id,
-  MIN(run_date) AS streak_start,
-  MAX(run_date) AS streak_end,
-  COUNT(*) AS streak_days
-FROM grouped
-GROUP BY pipeline_id, island_key
-HAVING COUNT(*) >= 3
-ORDER BY pipeline_id ASC, streak_start ASC;`,
+  -- TODO: compute gap-and-island streaks
+;`,
     solutionSql: `WITH daily_success AS (
   SELECT DISTINCT pipeline_id, run_date
   FROM pipeline_runs
@@ -169,39 +157,14 @@ INSERT INTO click_events VALUES
   (5, 'u1', '2026-02-01 11:20:00'),
   (6, 'u2', '2026-02-01 09:00:00'),
   (7, 'u2', '2026-02-01 09:45:00');`,
-    starterCode: `WITH lagged AS (
-  SELECT
-    user_id,
-    event_ts,
-    LAG(event_ts) OVER (PARTITION BY user_id ORDER BY event_ts) AS prev_ts
-  FROM click_events
-),
-flagged AS (
-  SELECT
-    user_id,
-    event_ts,
-    CASE
-      WHEN prev_ts IS NULL OR (julianday(event_ts) - julianday(prev_ts)) * 86400 > 1800 THEN 1
-      ELSE 0
-    END AS is_new_session
-  FROM lagged
-),
-sessionized AS (
-  SELECT
-    user_id,
-    event_ts,
-    SUM(is_new_session) OVER (PARTITION BY user_id ORDER BY event_ts ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS session_num
-  FROM flagged
-)
+    adversarialSetupSql: `INSERT INTO click_events VALUES
+  (8, 'u1', '2026-02-01 11:20:00'),
+  (9, 'u2', '2026-02-01 09:30:00');`,
+    starterCode: `-- Return: user_id, session_num, session_start, session_end, event_count (>30 min inactivity starts new session)
+-- Table: click_events(event_id, user_id, event_ts)
 SELECT
-  user_id,
-  session_num,
-  MIN(event_ts) AS session_start,
-  MAX(event_ts) AS session_end,
-  COUNT(*) AS event_count
-FROM sessionized
-GROUP BY user_id, session_num
-ORDER BY user_id, session_num;`,
+  -- TODO: detect > 1800s inactivity boundaries per user_id
+;`,
     solutionSql: `WITH lagged AS (
   SELECT
     user_id,
@@ -262,25 +225,17 @@ INSERT INTO orders VALUES
   (3, '2026-03-03', 300.0),
   (4, '2026-03-05', 150.0),
   (5, '2026-03-07', 250.0);`,
-    starterCode: `WITH RECURSIVE date_spine(dt) AS (
+    adversarialSetupSql: `INSERT INTO orders VALUES (6, '2026-03-04', NULL), (7, '2026-02-25', 999.0);`,
+    starterCode: `-- Return: dt, daily_gmv, rolling_7d_gmv for 2026-03-01 .. 2026-03-07
+-- Table: orders(order_id, order_date, amount)
+WITH RECURSIVE date_spine(dt) AS (
   SELECT '2026-03-01'
   UNION ALL
   SELECT date(dt, '+1 day') FROM date_spine WHERE dt < '2026-03-07'
-),
-daily AS (
-  SELECT
-    ds.dt,
-    COALESCE(SUM(o.amount), 0.0) AS daily_gmv
-  FROM date_spine ds
-  LEFT JOIN orders o ON o.order_date = ds.dt
-  GROUP BY ds.dt
 )
 SELECT
-  dt,
-  ROUND(daily_gmv, 2) AS daily_gmv,
-  ROUND(SUM(daily_gmv) OVER (ORDER BY dt ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2) AS rolling_7d_gmv
-FROM daily
-ORDER BY dt ASC;`,
+  -- TODO: left join orders and compute 7-day rolling sum
+;`,
     solutionSql: `WITH RECURSIVE date_spine(dt) AS (
   SELECT '2026-03-01'
   UNION ALL
@@ -331,22 +286,13 @@ INSERT INTO risk_scores VALUES
   ('u1', '2026-04-01 10:00:00', 42),
   ('u1', '2026-04-01 14:00:00', 88),
   ('u2', '2026-04-01 11:00:00', 70);`,
-    starterCode: `WITH joined AS (
-  SELECT
-    t.tx_id,
-    t.user_id,
-    t.tx_ts,
-    t.amount,
-    r.score,
-    ROW_NUMBER() OVER (PARTITION BY t.tx_id ORDER BY r.updated_ts DESC) AS rn
-  FROM transactions t
-  LEFT JOIN risk_scores r
-    ON t.user_id = r.user_id AND r.updated_ts <= t.tx_ts
-)
-SELECT tx_id, user_id, tx_ts, amount, score AS score_at_tx
-FROM joined
-WHERE rn = 1 OR score IS NULL
-ORDER BY tx_id;`,
+    adversarialSetupSql: `INSERT INTO transactions VALUES (4, 'u1', '2026-04-01 10:00:00', 110.0), (5, 'u3', '2026-04-01 15:00:00', 40.0);
+INSERT INTO risk_scores VALUES ('u1', '2026-04-01 12:00:00', 99);`,
+    starterCode: `-- Return: tx_id, user_id, tx_ts, amount, score_at_tx (latest score where updated_ts <= tx_ts)
+-- Tables: transactions(tx_id, user_id, tx_ts, amount), risk_scores(user_id, updated_ts, score)
+SELECT
+  -- TODO: perform point-in-time ASOF lookup without future leakage
+;`,
     solutionSql: `WITH joined AS (
   SELECT
     t.tx_id,
@@ -394,22 +340,16 @@ INSERT INTO funnel_events VALUES
   (7, 'u3', 'purchase', '2026-05-01 12:00:00'),
   (8, 'u4', 'view', '2026-05-01 13:00:00'),
   (9, 'u4', 'checkout', '2026-05-01 13:04:00');`,
-    starterCode: `WITH user_stages AS (
-  SELECT
-    user_id,
-    MIN(CASE WHEN stage = 'view' THEN event_ts END) AS view_ts,
-    MIN(CASE WHEN stage = 'cart' THEN event_ts END) AS cart_ts,
-    MIN(CASE WHEN stage = 'checkout' THEN event_ts END) AS checkout_ts,
-    MIN(CASE WHEN stage = 'purchase' THEN event_ts END) AS purchase_ts
-  FROM funnel_events
-  GROUP BY user_id
-)
+    adversarialSetupSql: `INSERT INTO funnel_events VALUES
+  (10, 'u5', 'view', '2026-05-01 14:05:00'),
+  (11, 'u5', 'cart', '2026-05-01 14:00:00'),
+  (12, 'u6', 'view', '2026-05-01 15:00:00'),
+  (13, 'u6', 'view', '2026-05-01 15:01:00');`,
+    starterCode: `-- Return: view_users, cart_users, checkout_users, purchase_users (strictly ordered stages)
+-- Table: funnel_events(id, user_id, stage, event_ts)
 SELECT
-  COUNT(view_ts) AS view_users,
-  COUNT(CASE WHEN cart_ts > view_ts THEN 1 END) AS cart_users,
-  COUNT(CASE WHEN checkout_ts > cart_ts AND cart_ts > view_ts THEN 1 END) AS checkout_users,
-  COUNT(CASE WHEN purchase_ts > checkout_ts AND checkout_ts > cart_ts AND cart_ts > view_ts THEN 1 END) AS purchase_users
-FROM user_stages;`,
+  -- TODO: enforce chronological stage progression per user_id
+;`,
     solutionSql: `WITH user_stages AS (
   SELECT
     user_id,
@@ -452,32 +392,12 @@ INSERT INTO user_activity VALUES
   ('u2', '2026-01-12'), ('u2', '2026-02-18'),
   ('u3', '2026-01-20'),
   ('u4', '2026-02-02'), ('u4', '2026-03-04');`,
-    starterCode: `WITH first_seen AS (
-  SELECT user_id, strftime('%Y-%m', MIN(activity_date)) AS cohort_month
-  FROM user_activity
-  GROUP BY user_id
-),
-monthly_active AS (
-  SELECT DISTINCT user_id, strftime('%Y-%m', activity_date) AS act_month
-  FROM user_activity
-),
-cohort_counts AS (
-  SELECT
-    f.cohort_month,
-    (CAST(substr(m.act_month, 1, 4) AS INTEGER) - CAST(substr(f.cohort_month, 1, 4) AS INTEGER)) * 12
-      + (CAST(substr(m.act_month, 6, 2) AS INTEGER) - CAST(substr(f.cohort_month, 6, 2) AS INTEGER)) AS month_offset,
-    COUNT(DISTINCT m.user_id) AS active_users
-  FROM first_seen f
-  JOIN monthly_active m ON f.user_id = m.user_id
-  GROUP BY f.cohort_month, month_offset
-)
+    adversarialSetupSql: `INSERT INTO user_activity VALUES ('u1', '2026-02-22'), ('u2', '2026-01-29');`,
+    starterCode: `-- Return: cohort_month, month_offset, active_users, retention_pct
+-- Table: user_activity(user_id, activity_date)
 SELECT
-  cohort_month,
-  month_offset,
-  active_users,
-  ROUND(active_users * 100.0 / MAX(CASE WHEN month_offset = 0 THEN active_users END) OVER (PARTITION BY cohort_month), 1) AS retention_pct
-FROM cohort_counts
-ORDER BY cohort_month, month_offset;`,
+  -- TODO: compute cohort month and monthly retention percentage
+;`,
     solutionSql: `WITH first_seen AS (
   SELECT user_id, strftime('%Y-%m', MIN(activity_date)) AS cohort_month
   FROM user_activity
@@ -531,14 +451,13 @@ INSERT INTO org VALUES
   (3, 'Dir Analytics', 1, 200),
   (4, 'Staff DE', 2, 150),
   (5, 'Senior DE', 4, 100);`,
-    starterCode: `WITH RECURSIVE tree AS (
+    starterCode: `-- Return: emp_id, name, depth, path (starting from manager_id IS NULL)
+-- Table: org(emp_id, name, manager_id, budget)
+WITH RECURSIVE tree AS (
   SELECT emp_id, name, 0 AS depth, name AS path
   FROM org
   WHERE manager_id IS NULL
-  UNION ALL
-  SELECT o.emp_id, o.name, t.depth + 1, t.path || ' > ' || o.name
-  FROM org o
-  JOIN tree t ON o.manager_id = t.emp_id
+  -- UNION ALL ...
 )
 SELECT emp_id, name, depth, path
 FROM tree
@@ -583,16 +502,16 @@ INSERT INTO cdc_customers VALUES
   (2, 'b@co.io', 'pro', 'I', 101),
   (2, 'b@co.io', 'pro', 'D', 109),
   (3, 'c@co.io', 'enterprise', 'I', 110);`,
-    starterCode: `WITH ranked AS (
-  SELECT
-    id, email, tier, op, lsn_seq,
-    ROW_NUMBER() OVER (PARTITION BY id ORDER BY lsn_seq DESC) AS rn
-  FROM cdc_customers
-)
-SELECT id, email, tier, lsn_seq
-FROM ranked
-WHERE rn = 1 AND op != 'D'
-ORDER BY id ASC;`,
+    adversarialSetupSql: `INSERT INTO cdc_customers VALUES
+  (1, 'a@co.io', 'enterprise', 'D', 120),
+  (4, 'd@co.io', 'pro', 'U', 115),
+  (4, 'd@co.io', 'free', 'I', 110),
+  (5, 'e@co.io', NULL, 'I', 112);`,
+    starterCode: `-- Return: id, email, tier, lsn_seq (latest non-deleted CDC state per id)
+-- Table: cdc_customers(id, email, tier, op, lsn_seq)
+SELECT
+  -- TODO: rank by lsn_seq DESC before filtering op != 'D'
+;`,
     solutionSql: `WITH ranked AS (
   SELECT
     id, email, tier, op, lsn_seq,
@@ -628,22 +547,12 @@ INSERT INTO api_latency VALUES
   (1, '/ingest', 12), (2, '/ingest', 18), (3, '/ingest', 25), (4, '/ingest', 40),
   (5, '/query', 80), (6, '/query', 110), (7, '/query', 140),
   (8, '/auth', 15), (9, '/auth', 21);`,
-    starterCode: `WITH ordered AS (
-  SELECT
-    endpoint,
-    latency_ms,
-    ROW_NUMBER() OVER (PARTITION BY endpoint ORDER BY latency_ms ASC) AS rn,
-    COUNT(*) OVER (PARTITION BY endpoint) AS cnt
-  FROM api_latency
-)
+    adversarialSetupSql: `INSERT INTO api_latency VALUES (10, '/ingest', 18), (11, '/auth', 18), (12, '/query', 110);`,
+    starterCode: `-- Return: endpoint, sample_count, median_ms (exact median for odd & even counts)
+-- Table: api_latency(id, endpoint, latency_ms)
 SELECT
-  endpoint,
-  MAX(cnt) AS sample_count,
-  ROUND(AVG(latency_ms * 1.0), 1) AS median_ms
-FROM ordered
-WHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)
-GROUP BY endpoint
-ORDER BY median_ms DESC;`,
+  -- TODO: order latencies per endpoint and select middle 1 or 2 rows
+;`,
     solutionSql: `WITH ordered AS (
   SELECT
     endpoint,
@@ -684,30 +593,12 @@ ORDER BY median_ms DESC;`,
 INSERT INTO maint_windows VALUES
   (1, 'c1', 10, 30), (2, 'c1', 20, 50), (3, 'c1', 50, 65), (4, 'c1', 80, 100),
   (5, 'c2', 5, 15), (6, 'c2', 25, 40);`,
-    starterCode: `WITH running AS (
-  SELECT
-    cluster_id,
-    start_min,
-    end_min,
-    MAX(end_min) OVER (PARTITION BY cluster_id ORDER BY start_min, end_min ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) AS prev_max_end
-  FROM maint_windows
-),
-islands AS (
-  SELECT
-    cluster_id,
-    start_min,
-    end_min,
-    SUM(CASE WHEN prev_max_end IS NULL OR start_min > prev_max_end THEN 1 ELSE 0 END)
-      OVER (PARTITION BY cluster_id ORDER BY start_min, end_min ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS grp
-  FROM running
-)
+    adversarialSetupSql: `INSERT INTO maint_windows VALUES (7, 'c1', 15, 25), (8, 'c2', 40, 45);`,
+    starterCode: `-- Return: cluster_id, merged_start, merged_end
+-- Table: maint_windows(id, cluster_id, start_min, end_min)
 SELECT
-  cluster_id,
-  MIN(start_min) AS merged_start,
-  MAX(end_min) AS merged_end
-FROM islands
-GROUP BY cluster_id, grp
-ORDER BY cluster_id, merged_start;`,
+  -- TODO: merge overlapping or touching maintenance intervals
+;`,
     solutionSql: `WITH running AS (
   SELECT
     cluster_id,
@@ -756,16 +647,12 @@ ORDER BY cluster_id, merged_start;`,
 INSERT INTO monthly_rev VALUES
   ('Cloud', '2026-01', 1000.0), ('Cloud', '2026-02', 1250.0), ('Cloud', '2026-03', 1500.0),
   ('Ads', '2026-01', 2000.0), ('Ads', '2026-02', 1800.0), ('Ads', '2026-03', 2250.0);`,
-    starterCode: `SELECT
-  category,
-  month_str,
-  revenue,
-  LAG(revenue) OVER (PARTITION BY category ORDER BY month_str) AS prev_rev,
-  ROUND((revenue - LAG(revenue) OVER (PARTITION BY category ORDER BY month_str)) * 100.0
-    / NULLIF(LAG(revenue) OVER (PARTITION BY category ORDER BY month_str), 0), 2) AS mom_growth_pct,
-  ROUND(revenue * 100.0 / SUM(revenue) OVER (PARTITION BY month_str), 2) AS pct_of_month_total
-FROM monthly_rev
-ORDER BY category, month_str;`,
+    adversarialSetupSql: `INSERT INTO monthly_rev VALUES ('ZeroRev', '2026-01', 0.0), ('ZeroRev', '2026-02', 500.0);`,
+    starterCode: `-- Return: category, month_str, revenue, prev_rev, mom_growth_pct, pct_of_month_total
+-- Table: monthly_rev(category, month_str, revenue)
+SELECT
+  -- TODO: guard against zero division with NULLIF
+;`,
     solutionSql: `SELECT
   category,
   month_str,
@@ -1385,9 +1272,11 @@ export const SEED_SQL_QUESTIONS: Question[] = [
     experienceLevel: b.experienceLevel,
     companyTags: b.companies,
     roundType: 'SQL Coding',
+    evaluationType: 'sql',
     sourceType: 'curated_track',
     sourceReference: `D's platforms Analytical SQL Mastery · ${b.topic}`,
     setupSchemaOrEnv: b.setupSql,
+    adversarialSetupSql: b.adversarialSetupSql,
     sampleInput: b.setupSql.split('INSERT INTO').slice(1).map((s) => 'INSERT INTO' + s).join('\n'),
     expectedOutput: 'Executed dynamically against reference query in SQLite Wasm',
     testCases: [{ name: 'Canonical Dataset Verification', input: 'reference_sql', expected: 'Exact row & column match' }],
@@ -1411,6 +1300,7 @@ export const SEED_SQL_QUESTIONS: Question[] = [
     experienceLevel: s.experienceLevel,
     companyTags: s.companies,
     roundType: 'SQL Coding',
+    evaluationType: 'sql',
     sourceType: 'curated_track',
     sourceReference: `D's platforms Analytical SQL Mastery · ${s.topic}`,
     setupSchemaOrEnv: s.setupSql,
@@ -1437,6 +1327,7 @@ export const SEED_SQL_QUESTIONS: Question[] = [
     experienceLevel: s.experienceLevel,
     companyTags: s.companies,
     roundType: 'SQL Coding',
+    evaluationType: 'sql',
     sourceType: 'curated_track',
     sourceReference: `D's platforms Analytical SQL Mastery · ${s.topic}`,
     setupSchemaOrEnv: s.tableDdl,

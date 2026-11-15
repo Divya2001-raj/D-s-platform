@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, CheckCircle2, ChevronDown, ChevronRight, Circle, Search } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle2, ChevronDown, ChevronRight, Circle, ExternalLink, Search } from 'lucide-react';
 import type { ExperienceTier, Question } from '../types/platform';
 import { ROADMAP_TRACKS } from '../data';
 import { GenerateBatchButton } from './GenerateBatchButton';
@@ -9,6 +9,7 @@ interface RoadmapsViewProps {
   solvedIds: string[];
   experienceTier: ExperienceTier;
   onSelectQuestion: (q: Question) => void;
+  onSelectTopic: (topicNameOrId: string) => void;
   onAddGeneratedQuestions: (qs: Question[]) => Promise<void>;
 }
 
@@ -17,6 +18,7 @@ export function RoadmapsView({
   solvedIds,
   experienceTier,
   onSelectQuestion,
+  onSelectTopic,
   onAddGeneratedQuestions,
 }: RoadmapsViewProps) {
   const [activeTrackId, setActiveTrackId] = useState<string>(ROADMAP_TRACKS[0].id);
@@ -77,21 +79,21 @@ export function RoadmapsView({
               key={track.id}
               onClick={() => setActiveTrackId(track.id)}
               className={`glass-surface rounded-2xl p-5 text-left transition-all ${
-                isActive ? 'border-[#2DD4BF]/50 ring-1 ring-[#2DD4BF]/30' : 'hover:border-white/20'
+                isActive ? 'border-[var(--accent-primary)] ring-1 ring-[var(--accent-primary)]' : 'hover:border-[var(--border-strong)]'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <h2 className="font-display text-base font-bold text-white">{track.id}</h2>
-                <span className="font-mono text-xs text-[#2DD4BF] tabular-nums">
+                <span className="font-mono text-xs text-slate-300 tabular-nums">
                   {solved}/{tqs.length}
                 </span>
               </div>
               <p className="mt-1 text-xs font-medium text-slate-300">{track.subtitle}</p>
               <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-400">{track.description}</p>
-              <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+              <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-neutral-500/20">
                 <div
-                  className="h-full rounded-full transition-all"
-                  style={{ width: `${pct}%`, backgroundColor: track.accent }}
+                  className="h-full rounded-full bg-[var(--accent-primary)] transition-all"
+                  style={{ width: `${pct}%` }}
                 />
               </div>
             </button>
@@ -108,17 +110,17 @@ export function RoadmapsView({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter patterns, titles, companies..."
-              className="w-full rounded-xl border border-white/10 bg-[#07080C]/80 py-2 pr-3 pl-9 text-xs text-white placeholder-slate-500 outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl py-2 pr-3 pl-9 text-xs text-white placeholder-slate-500 outline-none focus:border-[var(--border-strong)]"
             />
           </div>
 
-          <div className="flex rounded-xl border border-white/10 bg-[#07080C]/80 p-0.5 text-xs">
+          <div className="inset-surface flex rounded-xl p-0.5 text-xs">
             {['All', 'Easy', 'Medium', 'Hard'].map((diff) => (
               <button
                 key={diff}
                 onClick={() => setDifficultyFilter(diff)}
                 className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
-                  difficultyFilter === diff ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
+                  difficultyFilter === diff ? 'tab-active' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {diff}
@@ -149,6 +151,7 @@ export function RoadmapsView({
                 ? 'Python & DSA Coding'
                 : 'PySpark & Big Data'
           }
+          excludeTitles={questions.map((q) => q.title)}
           onGenerated={onAddGeneratedQuestions}
         />
       </div>
@@ -166,66 +169,90 @@ export function RoadmapsView({
 
             return (
               <div key={topic} className="glass-surface overflow-hidden rounded-2xl">
-                <button
-                  onClick={() => toggleTopic(topic)}
-                  className="flex w-full items-center justify-between px-5 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
-                >
-                  <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-between px-5 py-3.5 transition-colors hover:bg-white/[0.02]">
+                  <button
+                    onClick={() => toggleTopic(topic)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
                     {isOpen ? (
                       <ChevronDown className="h-4 w-4 text-slate-400" />
                     ) : (
                       <ChevronRight className="h-4 w-4 text-slate-400" />
                     )}
-                    <span className="font-display text-sm font-semibold text-white">{topic}</span>
-                  </div>
-                  <div className="flex items-center gap-3 font-mono text-xs text-slate-400 tabular-nums">
+                    <span className="truncate font-display text-sm font-semibold text-white">{topic}</span>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-3 font-mono text-xs text-slate-400 tabular-nums">
+                    <button
+                      onClick={() => onSelectTopic(topic)}
+                      className="btn-secondary inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-sans text-xs font-medium"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      <span>Topic Guide</span>
+                    </button>
                     <span>
                       {topicSolved} / {items.length}
                     </span>
                   </div>
-                </button>
+                </div>
 
                 {isOpen && (
                   <div className="divide-y divide-white/[0.06] border-t border-white/[0.06]">
                     {items.map((q) => {
                       const done = solvedSet.has(q.uniqueId);
                       return (
-                        <button
+                        <div
                           key={q.uniqueId}
-                          onClick={() => onSelectQuestion(q)}
-                          className="flex w-full items-center justify-between px-5 py-3 text-left transition-colors hover:bg-white/[0.03]"
+                          className="flex w-full items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-white/[0.03]"
                         >
-                          <div className="flex min-w-0 items-center gap-3 pr-4">
+                          <button
+                            onClick={() => onSelectQuestion(q)}
+                            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                          >
                             {done ? (
-                              <CheckCircle2 className="h-4 w-4 shrink-0 text-[#34D399]" />
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-white" />
                             ) : (
-                              <Circle className="h-4 w-4 shrink-0 text-slate-600" />
+                              <Circle className="h-4 w-4 shrink-0 text-slate-500" />
                             )}
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-medium text-slate-100">{q.title}</div>
+                              <div className="truncate text-sm font-medium text-white hover:underline">{q.title}</div>
                               <div className="mt-0.5 truncate text-xs text-slate-400">
                                 {q.subtopic} · {q.companyTags.slice(0, 3).join(', ')}
                                 {q.sourceType === 'ai_generated_practice' ? ' · AI-Generated Practice' : ''}
                               </div>
                             </div>
-                          </div>
+                          </button>
 
-                          <div className="flex shrink-0 items-center gap-4">
+                          <div className="flex shrink-0 items-center gap-3">
                             <span className="hidden font-mono text-xs text-slate-500 sm:inline">{q.experienceLevel}</span>
                             <span
                               className={`w-14 text-right font-mono text-xs ${
                                 q.difficulty === 'Hard'
-                                  ? 'text-[#FB7185]'
+                                  ? 'font-bold text-white'
                                   : q.difficulty === 'Medium'
-                                    ? 'text-[#FBBF24]'
-                                    : 'text-[#34D399]'
+                                    ? 'text-slate-300'
+                                    : 'text-slate-400'
                               }`}
                             >
                               {q.difficulty}
                             </span>
-                            <ArrowRight className="h-4 w-4 text-slate-500" />
+                            <a
+                              href={`/problem/${encodeURIComponent(q.uniqueId)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open in New Tab"
+                              className="btn-secondary rounded-lg p-1.5 text-slate-400 hover:text-white"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                            <button
+                              onClick={() => onSelectQuestion(q)}
+                              className="text-slate-400 hover:text-white"
+                              aria-label={`Open ${q.title}`}
+                            >
+                              <ArrowRight className="h-4 w-4" />
+                            </button>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>

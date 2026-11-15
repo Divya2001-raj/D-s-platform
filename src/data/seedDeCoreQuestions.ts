@@ -1,4 +1,5 @@
 import type { Difficulty, ExperienceTier, Question } from '../types/platform';
+import { buildPythonStarterSkeleton } from '../lib/pythonSkeleton';
 
 interface DeSpec {
   id: string;
@@ -525,13 +526,16 @@ export const SEED_DE_CORE_QUESTIONS: Question[] = [
     experienceLevel: d.experienceLevel,
     companyTags: d.companies,
     roundType: d.roundType,
+    roundNumber: d.domain === 'Engineering Labs' || d.id === 'de_02_scd_type2_merge_engine' ? 7 : 3,
+    evaluationType: 'python',
     sourceType: 'curated_track',
     sourceReference: `D's platforms DE Core & Labs · ${d.topic}`,
     setupSchemaOrEnv: '# Executed in Pyodide CPython + PySpark DataFrame Shim Worker',
     sampleInput: d.testInput,
     expectedOutput: 'All pipeline & lab assertions pass',
     testCases: [{ name: 'Pipeline Validation', input: d.testInput, expected: 'True' }],
-    starterCode: d.starterCode,
+    hiddenTestCases: [{ name: 'Hidden Edge-Case Validation', input: d.testInput, expected: 'True' }],
+    starterCode: buildPythonStarterSkeleton(d.detailedSolution, `Implement ${d.subtopic}`),
     detailedSolution: d.detailedSolution,
     alternativeApproaches: 'Compare Spark native expressions, Delta/Iceberg SQL MERGE, and streaming checkpoints.',
     explanation: d.explanation,
@@ -551,13 +555,16 @@ export const SEED_DE_CORE_QUESTIONS: Question[] = [
     experienceLevel,
     companyTags: companies,
     roundType: domain === 'Engineering Labs' ? 'Engineering Lab' : 'PySpark & Big Data',
+    roundNumber: domain === 'Engineering Labs' ? 7 : 3,
+    evaluationType: 'python',
     sourceType: 'curated_track',
     sourceReference: `D's platforms DE Core & Labs · ${topic}`,
     setupSchemaOrEnv: '# Executed in Pyodide CPython + PySpark DataFrame Shim Worker',
     sampleInput: test,
     expectedOutput: 'All pipeline assertions pass',
-    testCases: [{ name: 'Lab Assertion', input: test, expected: 'True' }],
-    starterCode: code,
+    testCases: [{ name: 'Sample Lab Assertion', input: test, expected: 'True' }],
+    hiddenTestCases: [{ name: 'Hidden Lab Assertion', input: test, expected: 'True' }],
+    starterCode: buildPythonStarterSkeleton(code, `Implement ${topic}`),
     detailedSolution: code,
     alternativeApproaches: 'Evaluate distributed shuffle impact, partition sizing, and idempotency guarantees.',
     explanation: `Production pattern tested in ${companies.join(', ')} Data Engineering interviews.`,

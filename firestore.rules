@@ -95,7 +95,7 @@ service cloud.firestore {
         && data.keys().hasOnly(['uid', 'questionId', 'language', 'code', 'passed', 'runtimeMs', 'createdAt'])
         && isValidId(data.uid)
         && isValidId(data.questionId)
-        && data.language in ['sql', 'python', 'pyspark', 'yaml', 'terraform']
+        && data.language in ['sql', 'python', 'pyspark', 'yaml', 'terraform', 'design']
         && isStringBounded(data.code, 0, 30000)
         && data.passed is bool
         && data.runtimeMs is number && data.runtimeMs >= 0 && data.runtimeMs <= 600000
@@ -186,6 +186,12 @@ service cloud.firestore {
     match /test/connection {
       allow get: if true;
       allow list, create, update, delete: if false;
+    }
+
+    // System Health & E2E Diagnostics Records
+    match /system_diagnostics/{diagId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isValidId(diagId) && isVerifiedUser();
     }
 
     // 1. User Profiles (Strict PII Isolation)
@@ -300,6 +306,39 @@ service cloud.firestore {
           && parentProgressOwned();
         allow update: if false;
         allow delete: if isValidId(userId) && isValidId(messageId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /mistake_vault/{itemId} {
+        allow get: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && ((isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin());
+        allow create, update: if isValidId(userId) && isValidId(itemId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && incoming().uid == request.auth.uid
+          && parentProgressOwned();
+        allow delete: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /resume_profile/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && ((isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin());
+        allow create, update: if isValidId(userId) && isValidId(docId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && incoming().uid == request.auth.uid
+          && parentProgressOwned();
+        allow delete: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /applications/{appId} {
+        allow get: if isValidId(userId) && isValidId(appId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && ((isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin());
+        allow create, update: if isValidId(userId) && isValidId(appId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && incoming().uid == request.auth.uid
+          && parentProgressOwned();
+        allow delete: if isValidId(userId) && isValidId(appId) && (isOwner(userId) || isAdmin());
       }
     }
 

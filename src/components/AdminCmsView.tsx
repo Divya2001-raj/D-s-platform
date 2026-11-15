@@ -4,8 +4,10 @@ import {
   CheckCircle2,
   Database,
   FileUp,
+  ImagePlus,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
   ShieldCheck,
   Trash2,
@@ -15,18 +17,28 @@ import type {
   Difficulty,
   ExperienceTier,
   InterviewExperience,
+  KnowledgeTopic,
   Question,
   QuestionSourceType,
 } from '../types/platform';
+import { ensureMinimumTestCases } from '../lib/questionEnricher';
+import { BrandMark, getCustomBrandLogo, setCustomBrandLogo } from './BrandMark';
+import { SystemDiagnosticsSuite } from './SystemDiagnosticsSuite';
 
 interface AdminCmsViewProps {
   isAdmin: boolean;
+  userId?: string | null;
   questions: Question[];
+  topics?: KnowledgeTopic[];
   experiences: InterviewExperience[];
   onSaveQuestion: (q: Question) => Promise<void>;
   onDeleteQuestion: (id: string) => Promise<void>;
-  onBulkImportQuestions: (qs: Question[]) => Promise<void>;
+  onBulkImportQuestions: (
+    qs: Question[],
+    onProgress?: (committed: number, total: number) => void,
+  ) => Promise<void>;
   onModerateExperience: (id: string, status: InterviewExperience['verificationStatus']) => Promise<void>;
+  onAutoRepairQuestions?: () => Promise<number>;
 }
 
 function parseCsvRow(line: string): string[] {
@@ -55,20 +67,24 @@ function parseCsvRow(line: string): string[] {
 
 export function AdminCmsView({
   isAdmin,
+  userId = null,
   questions,
+  topics = [],
   experiences,
   onSaveQuestion,
   onDeleteQuestion,
   onBulkImportQuestions,
   onModerateExperience,
+  onAutoRepairQuestions,
 }: AdminCmsViewProps) {
-  const [tab, setTab] = useState<'questions' | 'import' | 'moderation' | 'duplicates'>('questions');
+  const [tab, setTab] = useState<'questions' | 'import' | 'testAudit' | 'diagnostics' | 'moderation' | 'duplicates'>('questions');
+  const [hasCustomLogo, setHasCustomLogo] = useState<boolean>(() => Boolean(getCustomBrandLogo()));
   const [title, setTitle] = useState('');
   const [domain, setDomain] = useState('Analytical SQL');
   const [topic, setTopic] = useState('Window Functions');
   const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
   const [expLevel, setExpLevel] = useState<ExperienceTier>('4-6 yrs');
-  const [sourceType, setSourceType] = useState<QuestionSourceType>('curated_track');
+  const [sourceType, setSourceType] = useState<QuestionSourceType>('verified_interview');
   const [companies, setCompanies] = useState('Google, Databricks');
   const [problemStatement, setProblemStatement] = useState('');
   const [setupSchema, setSetupSchema] = useState('');
@@ -77,6 +93,13 @@ export function AdminCmsView({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [importStatus, setImportStatus] = useState('');
+  const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null);
+  const [auditReport, setAuditReport] = useState<{
+    checkedAt: string;
+    total: number;
+    passing6Plus: number;
+    under6: Array<{ id: string; title: string; count: number }>;
+  } | null>(null);
 
   const duplicates = useMemo(() => {
     const byNormTitle = new Map<string, Question[]>();
@@ -92,7 +115,7 @@ export function AdminCmsView({
   if (!isAdmin) {
     return (
       <div className="glass-surface rounded-2xl p-8 text-center">
-        <ShieldCheck className="mx-auto h-8 w-8 text-[#FBBF24]" />
+        <ShieldCheck className="mx-auto h-8 w-8 text-white" />
         <h1 className="mt-3 font-display text-xl font-bold text-white">Admin CMS Access Required</h1>
         <p className="mt-1 text-xs text-slate-400">
           Sign in with an authorized administrator account (`divyaraj8861@gmail.com` or an entry in `/admins/{'{uid}'}`) to manage questions, bulk imports, and interview moderation.
@@ -236,40 +259,114 @@ export function AdminCmsView({
           });
         }
       }
-      await onBulkImportQuestions(parsed);
-      setImportStatus(`Successfully imported ${parsed.length} questions into Firestore.`);
+      const enrichedBatch = parsed.map(ensureMinimumTestCases);
+      setImportProgress({ done: 0, total: enrichedBatch.length });
+      await onBulkImportQuestions(enrichedBatch, (done, total) => {
+        setImportProgress({ done, total });
+      });
+      setImportStatus(
+        `Committed ${enrichedBatch.length.toLocaleString()} enriched questions (500-doc Firestore WriteBatch chunks). Every question guaranteed >= 6 executable test cases.`,
+      );
     } catch (err) {
       setImportStatus(`Import error: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
+  const handleRun6PlusAudit = () => {
+    const under6 = questions
+      .map((q) => ({
+        id: q.uniqueId,
+        title: q.title,
+        count: (q.testCases?.length || 0) + (q.hiddenTestCases?.length || 0),
+      }))
+      .filter((x) => x.count < 6);
+    setAuditReport({
+      checkedAt: new Date().toLocaleTimeString(),
+      total: questions.length,
+      passing6Plus: questions.length - under6.length,
+      under6,
+    });
+  };
+
+  const handleUploadBrandAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setCustomBrandLogo(reader.result);
+        setHasCustomLogo(true);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="glass-surface flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5">
+      <div className="glass-surface flex flex-wrap items-center justify-between gap-4 rounded-[18px] p-5">
         <div>
-          <h1 className="font-display text-xl font-bold text-white">Admin CMS (`/admin`)</h1>
+          <h1 className="font-display text-xl font-bold text-white">Admin CMS &amp; Platform Controls (`/admin`)</h1>
           <p className="text-xs text-slate-400">
-            Manage {questions.length} questions, bulk JSON/CSV scaling (3,700+ ready), duplicate audits, and interview moderation
+            Manage {questions.length} authentic questions, 500-doc bulk JSON/CSV scaling (3,700+ ready), Brand Husky Avatar, E2E Diagnostics, and moderation
           </p>
         </div>
 
-        <div className="flex rounded-xl border border-white/10 bg-[#07080C] p-1 text-xs">
+        <div className="inset-surface flex flex-wrap rounded-xl p-1 text-xs">
           {[
             { id: 'questions' as const, label: 'Questions Bank' },
-            { id: 'import' as const, label: 'Bulk JSON / CSV' },
+            { id: 'import' as const, label: 'Bulk JSON / CSV (500/batch)' },
+            { id: 'testAudit' as const, label: '6+ Test Auditor' },
+            { id: 'diagnostics' as const, label: 'E2E Diagnostics' },
             { id: 'moderation' as const, label: `Moderation (${experiences.filter((e) => e.verificationStatus === 'pending_review').length})` },
             { id: 'duplicates' as const, label: `Duplicates (${duplicates.length})` },
           ].map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
-                tab === t.id ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
+              className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
+                tab === t.id ? 'tab-active' : 'text-slate-400 hover:text-white'
               }`}
             >
               {t.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Brand & Husky Avatar Settings */}
+      <div className="glass-surface flex flex-wrap items-center justify-between gap-4 rounded-[28px] p-5">
+        <div className="flex items-center gap-3.5">
+          <BrandMark size={48} variant="avatar" showOnlineDot />
+          <div>
+            <div className="font-display text-sm font-bold text-white">
+              Brand Mascot &amp; Husky Emblem Settings
+            </div>
+            <p className="text-xs text-slate-400">
+              {hasCustomLogo
+                ? 'Using your custom uploaded avatar across Sidebar, Hero Card, Auth Modal & Brand Header.'
+                : 'Default Copper-Red Siberian Husky vector SVG inside luminous cyan-violet circular crest.'}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <label className="btn-primary inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold">
+            <ImagePlus className="h-3.5 w-3.5" />
+            <span>Upload Custom Avatar</span>
+            <input type="file" accept="image/*" onChange={handleUploadBrandAvatar} className="hidden" />
+          </label>
+          {hasCustomLogo && (
+            <button
+              type="button"
+              onClick={() => {
+                setCustomBrandLogo(null);
+                setHasCustomLogo(false);
+              }}
+              className="btn-secondary inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-medium"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset to Copper Husky SVG</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -295,13 +392,13 @@ export function AdminCmsView({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Question Title"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white outline-none focus:border-[#2DD4BF]"
+              className="inset-surface w-full rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <div className="grid grid-cols-2 gap-2.5">
               <select
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               >
                 <option>Analytical SQL</option>
                 <option>Python &amp; DSA</option>
@@ -312,12 +409,12 @@ export function AdminCmsView({
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Topic"
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               />
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               >
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
@@ -326,7 +423,7 @@ export function AdminCmsView({
               <select
                 value={expLevel}
                 onChange={(e) => setExpLevel(e.target.value as ExperienceTier)}
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               >
                 <option value="3-4 yrs">3-4 yrs</option>
                 <option value="4-6 yrs">4-6 yrs</option>
@@ -338,12 +435,12 @@ export function AdminCmsView({
                 value={companies}
                 onChange={(e) => setCompanies(e.target.value)}
                 placeholder="Company tags (comma-sep)"
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               />
               <select
                 value={sourceType}
                 onChange={(e) => setSourceType(e.target.value as QuestionSourceType)}
-                className="rounded-xl border border-white/10 bg-[#07080C] px-3 py-2 text-xs text-white"
+                className="inset-surface rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[var(--border-strong)]"
               >
                 <option value="curated_track">Curated Track</option>
                 <option value="verified_interview">Verified Interview</option>
@@ -356,32 +453,32 @@ export function AdminCmsView({
               value={problemStatement}
               onChange={(e) => setProblemStatement(e.target.value)}
               placeholder="Problem Statement (Markdown)"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] p-3 text-xs text-white"
+              className="inset-surface w-full rounded-xl p-3 text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <textarea
               rows={2}
               value={setupSchema}
               onChange={(e) => setSetupSchema(e.target.value)}
               placeholder="Setup Schema DDL / Python Setup"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] p-3 font-mono text-xs text-white"
+              className="inset-surface w-full rounded-xl p-3 font-mono text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <textarea
               rows={2}
               value={starterCode}
               onChange={(e) => setStarterCode(e.target.value)}
               placeholder="Starter Code"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] p-3 font-mono text-xs text-white"
+              className="inset-surface w-full rounded-xl p-3 font-mono text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <textarea
               rows={3}
               value={solution}
               onChange={(e) => setSolution(e.target.value)}
               placeholder="Detailed Reference Solution"
-              className="w-full rounded-xl border border-white/10 bg-[#07080C] p-3 font-mono text-xs text-white"
+              className="inset-surface w-full rounded-xl p-3 font-mono text-xs text-white outline-none focus:border-[var(--border-strong)]"
             />
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] py-2.5 text-xs font-semibold text-[#07080C]"
+              className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>{editingId ? 'Save Updated Question' : 'Publish Question'}</span>
@@ -399,7 +496,7 @@ export function AdminCmsView({
                   value={catalogSearch}
                   onChange={(e) => setCatalogSearch(e.target.value)}
                   placeholder="Filter catalog..."
-                  className="rounded-lg border border-white/10 bg-[#07080C] py-1.5 pl-8 pr-3 text-xs text-white outline-none focus:border-[#2DD4BF]"
+                  className="inset-surface rounded-lg py-1.5 pl-8 pr-3 text-xs text-white outline-none focus:border-[var(--border-strong)]"
                 />
               </div>
             </div>
@@ -426,14 +523,14 @@ export function AdminCmsView({
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button
                         onClick={() => startEditQuestion(q)}
-                        className="rounded-lg border border-white/10 p-1.5 text-slate-400 hover:border-[#2DD4BF]/50 hover:text-[#2DD4BF]"
+                        className="btn-secondary rounded-lg p-1.5 text-slate-400 hover:text-white"
                         title="Edit question"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => onDeleteQuestion(q.uniqueId)}
-                        className="rounded-lg border border-white/10 p-1.5 text-slate-400 hover:border-[#FB7185]/50 hover:text-[#FB7185]"
+                        className="btn-secondary rounded-lg p-1.5 text-slate-400 hover:text-white"
                         title="Delete from Firestore"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -449,51 +546,137 @@ export function AdminCmsView({
       {tab === 'import' && (
         <div className="glass-surface rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2 text-sm font-bold text-white">
-            <Database className="h-4 w-4 text-[#2DD4BF]" />
-            <span>Bulk JSON / CSV Question Importer</span>
+            <Database className="h-4 w-4 text-white" />
+            <span>Bulk JSON / CSV Question Importer (500-Doc Batched Commit · 3,700+ Ready)</span>
           </div>
           <p className="text-xs leading-relaxed text-slate-400">
             Upload a `.json` array of Question objects or a `.csv` file with columns:
-            <code className="mx-1 rounded bg-white/10 px-1.5 py-0.5 text-[#2DD4BF]">
+            <code className="mx-1 rounded bg-neutral-500/15 px-1.5 py-0.5 text-white">
               title,domain,topic,difficulty,experienceLevel,companyTags,problemStatement,setupSchemaOrEnv,starterCode,detailedSolution
             </code>
           </p>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-[#2DD4BF] to-[#818CF8] px-4 py-2.5 text-xs font-semibold text-[#07080C]">
+          <label className="btn-primary inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold">
             <FileUp className="h-4 w-4" />
             <span>Select JSON or CSV File</span>
             <input type="file" accept=".json,.csv" onChange={handleBulkUpload} className="hidden" />
           </label>
-          {importStatus && <p className="text-xs text-[#34D399]">{importStatus}</p>}
+          {importProgress && (
+            <div className="space-y-1.5 pt-2">
+              <div className="flex justify-between font-mono text-xs text-slate-300">
+                <span>Firestore 500-Doc Batch Progress</span>
+                <span>
+                  {importProgress.done.toLocaleString()} / {importProgress.total.toLocaleString()} (
+                  {Math.round((importProgress.done / Math.max(1, importProgress.total)) * 100)}%)
+                </span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-500/20">
+                <div
+                  className="h-full rounded-full bg-[var(--accent-primary)] transition-all"
+                  style={{ width: `${Math.round((importProgress.done / Math.max(1, importProgress.total)) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {importStatus && <p className="text-xs text-slate-300">{importStatus}</p>}
         </div>
+      )}
+
+      {tab === 'testAudit' && (
+        <div className="glass-surface rounded-2xl p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-base font-bold text-white">
+                6+ Executable Test Case Coverage Verifier
+              </h2>
+              <p className="text-xs text-slate-400">
+                Inspects all {questions.length} active questions to guarantee minimum 6 executable test assertions or rubric checks per question.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRun6PlusAudit}
+              className="btn-primary inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-xs font-semibold"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Verify 6+ Test Cases Across All Questions</span>
+            </button>
+          </div>
+
+          {auditReport && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="inset-surface rounded-xl p-3">
+                  <div className="text-xs text-slate-400">Questions Audited</div>
+                  <div className="mt-1 font-mono text-lg font-bold text-white">{auditReport.total}</div>
+                </div>
+                <div className="inset-surface rounded-xl p-3">
+                  <div className="text-xs text-slate-400">Passing 6+ Coverage</div>
+                  <div className="mt-1 font-mono text-lg font-bold text-[#10B981]">
+                    {auditReport.passing6Plus} / {auditReport.total}
+                  </div>
+                </div>
+                <div className="inset-surface rounded-xl p-3">
+                  <div className="text-xs text-slate-400">Gaps Found</div>
+                  <div className={`mt-1 font-mono text-lg font-bold ${auditReport.under6.length === 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+                    {auditReport.under6.length}
+                  </div>
+                </div>
+              </div>
+
+              {auditReport.under6.length === 0 ? (
+                <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 p-3 text-xs text-[#10B981]">
+                  Audit passed at {auditReport.checkedAt}: 100% of active questions ({auditReport.total}/{auditReport.total}) carry 6+ executable test cases or rubric checks.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {auditReport.under6.map((u) => (
+                    <div key={u.id} className="rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 p-3 text-xs text-[#EF4444]">
+                      {u.title} ({u.id}) — {u.count} test cases
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'diagnostics' && (
+        <SystemDiagnosticsSuite
+          userId={userId}
+          questions={questions}
+          topics={topics}
+          onAutoRepairQuestions={onAutoRepairQuestions}
+        />
       )}
 
       {tab === 'moderation' && (
         <div className="glass-surface rounded-2xl p-5 space-y-3">
           <h2 className="font-display text-base font-bold text-white">Interview Experience Moderation Queue</h2>
           {experiences.map((exp) => (
-            <div key={exp.id} className="rounded-xl border border-white/10 bg-[#07080C]/70 p-4 text-xs">
+            <div key={exp.id} className="inset-surface rounded-xl p-4 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <span className="font-bold text-white">{exp.company}</span> · {exp.position} ({exp.experience})
-                  <span className="ml-2 font-mono text-[#FBBF24]">[{exp.verificationStatus}]</span>
+                  <span className="ml-2 font-mono text-slate-300">[{exp.verificationStatus}]</span>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => onModerateExperience(exp.id, 'verified')}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#34D399]/15 px-2.5 py-1 text-[#34D399] hover:bg-[#34D399]/25"
+                    className="btn-secondary inline-flex items-center gap-1 rounded-lg px-2.5 py-1"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     <span>Verify</span>
                   </button>
                   <button
                     onClick={() => onModerateExperience(exp.id, 'reported_experience')}
-                    className="rounded-lg bg-[#2DD4BF]/15 px-2.5 py-1 text-[#2DD4BF] hover:bg-[#2DD4BF]/25"
+                    className="btn-secondary rounded-lg px-2.5 py-1"
                   >
                     Approve Reported
                   </button>
                   <button
                     onClick={() => onModerateExperience(exp.id, 'rejected')}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#FB7185]/15 px-2.5 py-1 text-[#FB7185] hover:bg-[#FB7185]/25"
+                    className="btn-secondary inline-flex items-center gap-1 rounded-lg px-2.5 py-1"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                     <span>Reject</span>
@@ -510,12 +693,12 @@ export function AdminCmsView({
         <div className="glass-surface rounded-2xl p-5">
           <h2 className="mb-3 font-display text-base font-bold text-white">Duplicate Detection Report</h2>
           {duplicates.length === 0 ? (
-            <p className="text-xs text-[#34D399]">Zero duplicate question titles detected across {questions.length} entries.</p>
+            <p className="text-xs text-slate-300">Zero duplicate question titles detected across {questions.length} entries.</p>
           ) : (
             <div className="space-y-3">
               {duplicates.map((grp, i) => (
-                <div key={i} className="rounded-xl border border-[#FBBF24]/30 bg-[#FBBF24]/5 p-3 text-xs">
-                  <div className="flex items-center gap-2 font-semibold text-[#FBBF24]">
+                <div key={i} className="inset-surface rounded-xl p-3 text-xs">
+                  <div className="flex items-center gap-2 font-semibold text-white">
                     <AlertTriangle className="h-4 w-4" />
                     <span>Collision: {grp[0].title}</span>
                   </div>

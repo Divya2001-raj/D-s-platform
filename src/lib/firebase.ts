@@ -1,9 +1,10 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCfz_CGagnar008q4CQctRERAPLbp8X1Zo',
+  apiKey: 'AIzaSyCfz_CGagnarO08q4CQctRERAPLbp8X1Zo',
   authDomain: 'd-s-platform.firebaseapp.com',
   projectId: 'd-s-platform',
   storageBucket: 'd-s-platform.firebasestorage.app',
@@ -16,6 +17,17 @@ export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfi
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export let analytics: Analytics | null = null;
+
+if (typeof window !== 'undefined') {
+  isSupported()
+    .then((supported) => {
+      if (supported) {
+        analytics = getAnalytics(app);
+      }
+    })
+    .catch(() => {});
+}
 
 export enum OperationType {
   CREATE = 'create',
