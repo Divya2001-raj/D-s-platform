@@ -234,7 +234,7 @@ export function DashboardView({
                   </span>
                 </div>
                 <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-white">
-                  {profile.displayName}
+                  D
                 </h1>
                 <p className="text-xs text-slate-400">Data Engineer 360 Workspace</p>
               </div>
