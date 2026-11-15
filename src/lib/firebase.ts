@@ -1,10 +1,19 @@
-import { initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+const firebaseConfig = {
+  apiKey: 'AIzaSyCfz_CGagnar008q4CQctRERAPLbp8X1Zo',
+  authDomain: 'd-s-platform.firebaseapp.com',
+  projectId: 'd-s-platform',
+  storageBucket: 'd-s-platform.firebasestorage.app',
+  messagingSenderId: '825527284999',
+  appId: '1:825527284999:web:2ce9a170228563074801a2',
+  measurementId: 'G-GJ7DKTXYX1',
+};
+
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
