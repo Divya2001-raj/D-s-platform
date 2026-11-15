@@ -115,7 +115,7 @@ import { SystemDiagnosticsSuite } from './components/SystemDiagnosticsSuite';
 
 const DEFAULT_PROFILE: UserProfile = {
   uid: 'guest',
-  displayName: 'Guest Engineer',
+  displayName: 'D',
   experienceTier: '4-6 yrs',
   targetPositions: ['Senior Data Engineer', 'Data Engineer II'],
   targetCompanies: ['Google', 'Databricks', 'Uber', 'Snowflake', 'PhonePe'],
