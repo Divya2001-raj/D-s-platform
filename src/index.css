@@ -20,12 +20,12 @@
     --text-heading: #141318;
     --text-secondary: #5C586B;
     --text-muted: #7B768C;
-    --accent-primary: #6D59A8;
-    --accent-primary-fg: #FFFFFF;
-    --accent-hover: #5D4996;
-    --accent-highlight: #6D59A8;
-    --accent-soft: #7E69BA;
-    --accent-orchid: #6D59A8;
+    --accent-primary: #B284E6;
+    --accent-primary-fg: #0D0D0F;
+    --accent-hover: #A070D8;
+    --accent-highlight: #9666D0;
+    --accent-soft: #B284E6;
+    --accent-orchid: #B284E6;
     --accent-secondary-bg: #EFEBF8;
     --accent-secondary-border: #DDD4F3;
     --accent-pass: #22C55E;
@@ -35,7 +35,7 @@
   }
 
   .dark {
-    /* Dark Mode (Default) — Flat Matte Black & Matte Dark Lavender */
+    /* Dark Mode (Default) — Flat Matte Black & Your Exact #B284E6 Lavender */
     --bg-canvas: #0D0D0F;
     --bg-card: #161619;
     --bg-inset: #202024;
@@ -48,12 +48,12 @@
     --text-heading: #FFFFFF;
     --text-secondary: #9E9BA8;
     --text-muted: #6C6975;
-    --accent-primary: #6D59A8;
-    --accent-primary-fg: #FFFFFF;
-    --accent-hover: #5D4996;
-    --accent-highlight: #8F7CC4;
-    --accent-soft: #8F7CC4;
-    --accent-orchid: #6D59A8;
+    --accent-primary: #B284E6;
+    --accent-primary-fg: #0D0D0F;
+    --accent-hover: #A070D8;
+    --accent-highlight: #B284E6;
+    --accent-soft: #C39DF0;
+    --accent-orchid: #B284E6;
     --accent-secondary-bg: #202024;
     --accent-secondary-border: #2A2A30;
     --accent-pass: #22C55E;
@@ -113,7 +113,7 @@
   border: 1px solid var(--border-subtle);
 }
 
-/* Single Flat Matte Dark Lavender (No Gradients, No Shine) */
+/* Single Flat Matte #B284E6 Lavender (No Gradients, No Shine) */
 .gradient-luminous,
 .gradient-violet {
   background: var(--accent-primary) !important;
@@ -121,7 +121,7 @@
   box-shadow: none !important;
 }
 
-/* Matte Dark Lavender Primary CTAs & Capsule Buttons */
+/* Matte #B284E6 Lavender Primary CTAs & Capsule Buttons */
 .btn-primary,
 .btn-terracotta,
 .btn-crimson,
@@ -151,7 +151,7 @@
   border-color: var(--accent-primary);
 }
 
-/* Active Tab / Pill Row Matte Dark Lavender State */
+/* Active Tab / Pill Row Matte #B284E6 Lavender State */
 .tab-active {
   background: var(--accent-primary) !important;
   color: var(--accent-primary-fg) !important;
@@ -159,7 +159,7 @@
   box-shadow: none !important;
 }
 
-/* Active Dock Squircle — Matte Dark Lavender with Crisp White Icon */
+/* Active Dock Squircle — Matte #B284E6 Lavender with Matte Black Icon */
 .borahae-squircle-active {
   background: var(--accent-primary) !important;
   color: var(--accent-primary-fg) !important;
@@ -315,12 +315,12 @@ html:not(.dark) .prose-invert {
   --tw-prose-body: #1A191E;
   --tw-prose-headings: #141318;
   --tw-prose-strong: #141318;
-  --tw-prose-code: #5D4996;
+  --tw-prose-code: #8E62C4;
   --tw-prose-pre-bg: #EFEBF8;
   --tw-prose-pre-code: #141318;
 }
 
-/* High-Contrast White Text Inside Matte Dark Lavender Buttons & Active Pills */
+/* High-Contrast Matte Black Text Inside #B284E6 Lavender Buttons & Pills */
 .btn-primary,
 .btn-primary *,
 .btn-luminous,
@@ -334,7 +334,10 @@ html:not(.dark) .prose-invert {
 .gradient-violet,
 .gradient-violet *,
 .tab-active,
-.tab-active *,
+.tab-active * {
+  color: var(--accent-primary-fg) !important;
+}
+
 .keep-white,
 .keep-white * {
   color: #FFFFFF !important;
@@ -353,7 +356,7 @@ html:not(.dark) .prose-invert {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(109, 89, 168, 0.75);
+  background: rgba(178, 132, 230, 0.65);
 }
 
 /* 3D Flip Card Utilities */
