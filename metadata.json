@@ -1,0 +1,6 @@
+{
+  "name": "D's platforms — DATA ENGINEER 360",
+  "description": "Master Every Skill. Understand Every Concept. Crack Every Round. Full-stack Data Engineering Learning & Interview Preparation Platform for 3–6+ YOE engineers targeting Tier 1 product companies.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

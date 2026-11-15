@@ -1,0 +1,483 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated Data Engineer user profile and target preparation preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Display name of the engineer."
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Optional avatar URL."
+        },
+        "experienceTier": {
+          "type": "string",
+          "enum": ["3-4 yrs", "4-6 yrs", "6+ yrs"],
+          "description": "Target experience level."
+        },
+        "targetPositions": {
+          "type": "array",
+          "description": "Up to 10 target Data Engineering job titles."
+        },
+        "targetCompanies": {
+          "type": "array",
+          "description": "Up to 25 target Tier-1 companies."
+        },
+        "dailyStreak": {
+          "type": "integer",
+          "description": "Consecutive active study days."
+        },
+        "studyHours": {
+          "type": "number",
+          "description": "Total logged preparation hours."
+        },
+        "readinessMetrics": {
+          "type": "object",
+          "description": "Estimated preparation metrics per round and skill domain."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "experienceTier", "dailyStreak", "studyHours", "createdAt", "updatedAt"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Aggregated problem solving progress, SM-2 spaced repetition queue, bookmarks, and topic accuracy.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner user UID."
+        },
+        "attemptedIds": {
+          "type": "array",
+          "description": "Bounded list of attempted question IDs."
+        },
+        "solvedIds": {
+          "type": "array",
+          "description": "Bounded list of solved question IDs."
+        },
+        "bookmarks": {
+          "type": "array",
+          "description": "Bounded list of bookmarked question or topic IDs."
+        },
+        "completedTopics": {
+          "type": "array",
+          "description": "Bounded list of completed knowledge topic IDs."
+        },
+        "topicAccuracy": {
+          "type": "object",
+          "description": "Map of domain/topic slug to accuracy percentage."
+        },
+        "sm2Queue": {
+          "type": "array",
+          "description": "Bounded SM-2 spaced repetition review schedule items."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": ["uid", "attemptedIds", "solvedIds", "bookmarks", "completedTopics", "createdAt", "updatedAt"]
+    },
+    "UserNote": {
+      "title": "UserNote",
+      "description": "Personal answer bank entry or saved AI Copilot explanation.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "source": {
+          "type": "string",
+          "enum": ["manual", "ai_copilot", "knowledge_hub", "arena"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "title", "content", "source", "createdAt", "updatedAt"]
+    },
+    "UserSubmission": {
+      "title": "UserSubmission",
+      "description": "Code or SQL execution submission history entry.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "questionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "language": {
+          "type": "string",
+          "enum": ["sql", "python", "pyspark", "yaml", "terraform"]
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 30000
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "runtimeMs": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "questionId", "language", "code", "passed", "runtimeMs", "createdAt"]
+    },
+    "CopilotMessage": {
+      "title": "CopilotMessage",
+      "description": "Persisted Gemini AI Copilot conversation turn.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant"]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24000
+        },
+        "contextLabel": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "role", "content", "createdAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Practice or interview question across SQL, Python/DSA, PySpark, Labs, and System Design.",
+      "type": "object",
+      "properties": {
+        "uniqueId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 240
+        },
+        "problemStatement": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 15000
+        },
+        "domain": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "subtopic": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "roadmapTracks": {
+          "type": "array"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Easy", "Medium", "Hard"]
+        },
+        "experienceLevel": {
+          "type": "string",
+          "enum": ["3-4 yrs", "4-6 yrs", "6+ yrs"]
+        },
+        "companyTags": {
+          "type": "array"
+        },
+        "roundType": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["verified_interview", "reported_experience", "curated_track", "ai_generated_practice"]
+        },
+        "sourceReference": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "setupSchemaOrEnv": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "sampleInput": {
+          "type": "string",
+          "maxLength": 8000
+        },
+        "expectedOutput": {
+          "type": "string",
+          "maxLength": 8000
+        },
+        "testCases": {
+          "type": "array"
+        },
+        "starterCode": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "detailedSolution": {
+          "type": "string",
+          "maxLength": 15000
+        },
+        "alternativeApproaches": {
+          "type": "string",
+          "maxLength": 8000
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "practicalRelevance": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "relatedLearningId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "executionPlanNotes": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "createdBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uniqueId", "title", "problemStatement", "domain", "topic", "difficulty", "experienceLevel", "roundType", "sourceType", "createdBy", "createdAt", "updatedAt"]
+    },
+    "KnowledgeTopic": {
+      "title": "KnowledgeTopic",
+      "description": "Deep-dive technical documentation and syllabus module for Data Engineering.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200
+        },
+        "domain": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "officialDocRefAndVersion": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "sections": {
+          "type": "object"
+        },
+        "updatedBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "title", "domain", "sections", "createdAt", "updatedAt"]
+    },
+    "InterviewExperience": {
+      "title": "InterviewExperience",
+      "description": "Moderated candidate interview experience report for Tier-1 companies.",
+      "type": "object",
+      "properties": {
+        "authorId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "company": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "position": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "experience": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "round": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "technology": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Easy", "Medium", "Hard"]
+        },
+        "interviewDate": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "roundsDetail": {
+          "type": "array"
+        },
+        "sourceAttribution": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "verificationStatus": {
+          "type": "string",
+          "enum": ["verified", "reported_experience", "pending_review", "rejected"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["authorId", "company", "position", "experience", "round", "difficulty", "roundsDetail", "verificationStatus", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile and preparation goals."
+    },
+    "/user_progress/{userId}": {
+      "schema": { "$ref": "#/entities/UserProgress" },
+      "description": "User progress summary and SM-2 spaced repetition state."
+    },
+    "/user_progress/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/UserNote" },
+      "description": "Personal Answer Notebook saved notes."
+    },
+    "/user_progress/{userId}/submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/UserSubmission" },
+      "description": "Code and SQL arena submission history."
+    },
+    "/user_progress/{userId}/chat/{messageId}": {
+      "schema": { "$ref": "#/entities/CopilotMessage" },
+      "description": "Persisted Gemini AI Copilot chat turns."
+    },
+    "/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Curriculum, company, and AI-generated practice questions."
+    },
+    "/knowledge_topics/{topicId}": {
+      "schema": { "$ref": "#/entities/KnowledgeTopic" },
+      "description": "Deep-dive Knowledge Hub syllabus modules."
+    },
+    "/interview_experiences/{expId}": {
+      "schema": { "$ref": "#/entities/InterviewExperience" },
+      "description": "Moderated candidate interview experience repository."
+    }
+  }
+}

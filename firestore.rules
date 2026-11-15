@@ -1,0 +1,388 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pillar 4.1: Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'divyaraj8861@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isStringBounded(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isBoundedStringList(arr, maxItems) {
+      return arr is list && arr.size() <= maxItems && (arr.size() == 0 || arr[0] is string);
+    }
+
+    // Entity Validators
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'experienceTier', 'dailyStreak', 'studyHours', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'experienceTier', 'targetPositions', 'targetCompanies', 'dailyStreak', 'studyHours', 'readinessMetrics', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && isStringBounded(data.displayName, 1, 120)
+        && (!('photoURL' in data) || isStringBounded(data.photoURL, 0, 512))
+        && data.experienceTier in ['3-4 yrs', '4-6 yrs', '6+ yrs']
+        && (!('targetPositions' in data) || isBoundedStringList(data.targetPositions, 10))
+        && (!('targetCompanies' in data) || isBoundedStringList(data.targetCompanies, 25))
+        && data.dailyStreak is int && data.dailyStreak >= 0 && data.dailyStreak <= 10000
+        && data.studyHours is number && data.studyHours >= 0 && data.studyHours <= 100000
+        && (!('readinessMetrics' in data) || data.readinessMetrics is map)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['uid', 'attemptedIds', 'solvedIds', 'bookmarks', 'completedTopics', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'attemptedIds', 'solvedIds', 'bookmarks', 'completedTopics', 'topicAccuracy', 'sm2Queue', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && isBoundedStringList(data.attemptedIds, 5000)
+        && isBoundedStringList(data.solvedIds, 5000)
+        && isBoundedStringList(data.bookmarks, 1000)
+        && isBoundedStringList(data.completedTopics, 500)
+        && (!('topicAccuracy' in data) || data.topicAccuracy is map)
+        && (!('sm2Queue' in data) || (data.sm2Queue is list && data.sm2Queue.size() <= 1000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserNote(data) {
+      return data.keys().hasAll(['uid', 'title', 'content', 'source', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'title', 'content', 'topic', 'source', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && isStringBounded(data.title, 1, 200)
+        && isStringBounded(data.content, 1, 20000)
+        && (!('topic' in data) || isStringBounded(data.topic, 0, 100))
+        && data.source in ['manual', 'ai_copilot', 'knowledge_hub', 'arena']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserSubmission(data) {
+      return data.keys().hasAll(['uid', 'questionId', 'language', 'code', 'passed', 'runtimeMs', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'questionId', 'language', 'code', 'passed', 'runtimeMs', 'createdAt'])
+        && isValidId(data.uid)
+        && isValidId(data.questionId)
+        && data.language in ['sql', 'python', 'pyspark', 'yaml', 'terraform']
+        && isStringBounded(data.code, 0, 30000)
+        && data.passed is bool
+        && data.runtimeMs is number && data.runtimeMs >= 0 && data.runtimeMs <= 600000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidCopilotMessage(data) {
+      return data.keys().hasAll(['uid', 'role', 'content', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'role', 'content', 'contextLabel', 'createdAt'])
+        && isValidId(data.uid)
+        && data.role in ['user', 'assistant']
+        && isStringBounded(data.content, 1, 24000)
+        && (!('contextLabel' in data) || isStringBounded(data.contextLabel, 0, 200))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidQuestion(data) {
+      return data.keys().hasAll(['uniqueId', 'title', 'problemStatement', 'domain', 'topic', 'difficulty', 'experienceLevel', 'roundType', 'sourceType', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uniqueId', 'title', 'problemStatement', 'domain', 'topic', 'subtopic', 'roadmapTracks', 'difficulty', 'experienceLevel', 'companyTags', 'roundType', 'sourceType', 'sourceReference', 'setupSchemaOrEnv', 'sampleInput', 'expectedOutput', 'testCases', 'starterCode', 'detailedSolution', 'alternativeApproaches', 'explanation', 'practicalRelevance', 'relatedLearningId', 'executionPlanNotes', 'createdBy', 'createdAt', 'updatedAt'])
+        && isValidId(data.uniqueId)
+        && isStringBounded(data.title, 2, 240)
+        && isStringBounded(data.problemStatement, 10, 15000)
+        && isStringBounded(data.domain, 1, 80)
+        && isStringBounded(data.topic, 1, 100)
+        && (!('subtopic' in data) || isStringBounded(data.subtopic, 0, 100))
+        && (!('roadmapTracks' in data) || isBoundedStringList(data.roadmapTracks, 15))
+        && data.difficulty in ['Easy', 'Medium', 'Hard']
+        && data.experienceLevel in ['3-4 yrs', '4-6 yrs', '6+ yrs']
+        && (!('companyTags' in data) || isBoundedStringList(data.companyTags, 30))
+        && isStringBounded(data.roundType, 1, 80)
+        && data.sourceType in ['verified_interview', 'reported_experience', 'curated_track', 'ai_generated_practice']
+        && (!('sourceReference' in data) || isStringBounded(data.sourceReference, 0, 300))
+        && (!('setupSchemaOrEnv' in data) || isStringBounded(data.setupSchemaOrEnv, 0, 20000))
+        && (!('sampleInput' in data) || isStringBounded(data.sampleInput, 0, 8000))
+        && (!('expectedOutput' in data) || isStringBounded(data.expectedOutput, 0, 8000))
+        && (!('testCases' in data) || (data.testCases is list && data.testCases.size() <= 20))
+        && (!('starterCode' in data) || isStringBounded(data.starterCode, 0, 10000))
+        && (!('detailedSolution' in data) || isStringBounded(data.detailedSolution, 0, 15000))
+        && (!('alternativeApproaches' in data) || isStringBounded(data.alternativeApproaches, 0, 8000))
+        && (!('explanation' in data) || isStringBounded(data.explanation, 0, 10000))
+        && (!('practicalRelevance' in data) || isStringBounded(data.practicalRelevance, 0, 2000))
+        && (!('relatedLearningId' in data) || isStringBounded(data.relatedLearningId, 0, 128))
+        && (!('executionPlanNotes' in data) || isStringBounded(data.executionPlanNotes, 0, 4000))
+        && isStringBounded(data.createdBy, 1, 128)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidKnowledgeTopic(data) {
+      return data.keys().hasAll(['id', 'title', 'domain', 'sections', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'title', 'domain', 'officialDocRefAndVersion', 'sections', 'updatedBy', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isStringBounded(data.title, 2, 200)
+        && isStringBounded(data.domain, 1, 80)
+        && (!('officialDocRefAndVersion' in data) || isStringBounded(data.officialDocRefAndVersion, 0, 300))
+        && data.sections is map
+        && (!('updatedBy' in data) || isStringBounded(data.updatedBy, 0, 128))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInterviewExperience(data) {
+      return data.keys().hasAll(['authorId', 'company', 'position', 'experience', 'round', 'difficulty', 'roundsDetail', 'verificationStatus', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['authorId', 'company', 'position', 'experience', 'location', 'round', 'technology', 'difficulty', 'interviewDate', 'roundsDetail', 'sourceAttribution', 'verificationStatus', 'createdAt', 'updatedAt'])
+        && isValidId(data.authorId)
+        && isStringBounded(data.company, 1, 100)
+        && isStringBounded(data.position, 1, 120)
+        && isStringBounded(data.experience, 1, 40)
+        && (!('location' in data) || isStringBounded(data.location, 0, 100))
+        && isStringBounded(data.round, 1, 80)
+        && (!('technology' in data) || isStringBounded(data.technology, 0, 160))
+        && data.difficulty in ['Easy', 'Medium', 'Hard']
+        && (!('interviewDate' in data) || isStringBounded(data.interviewDate, 0, 40))
+        && data.roundsDetail is list && data.roundsDetail.size() <= 15
+        && (!('sourceAttribution' in data) || isStringBounded(data.sourceAttribution, 0, 240))
+        && data.verificationStatus in ['verified', 'reported_experience', 'pending_review', 'rejected']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Admins Collection (read-only for client check)
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isOwner(adminUid);
+      allow list, create, update, delete: if false;
+    }
+
+    // Test Connection Document (non-PII health probe)
+    match /test/connection {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+    }
+
+    // 1. User Profiles (Strict PII Isolation)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedUser()
+        && isValidUserProfile(incoming())
+        && (
+          isAdmin() ||
+          (
+            isOwner(userId)
+            && incoming().uid == existing().uid
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'photoURL', 'experienceTier', 'targetPositions',
+              'targetCompanies', 'dailyStreak', 'studyHours', 'readinessMetrics', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 2. User Progress & Subcollections (Master Gate Pattern)
+    match /user_progress/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProgress(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedUser()
+        && isValidUserProgress(incoming())
+        && (
+          isAdmin() ||
+          (
+            isOwner(userId)
+            && incoming().uid == existing().uid
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'attemptedIds', 'solvedIds', 'bookmarks', 'completedTopics',
+              'topicAccuracy', 'sm2Queue', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+
+      function parentProgressOwned() {
+        return get(/databases/$(database)/documents/user_progress/$(userId)).data.uid == request.auth.uid;
+      }
+
+      match /notes/{noteId} {
+        allow get: if isValidId(userId) && isValidId(noteId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && ((isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(noteId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidUserNote(incoming())
+          && incoming().uid == request.auth.uid
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentProgressOwned();
+        allow update: if isValidId(userId) && isValidId(noteId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidUserNote(incoming())
+          && incoming().uid == existing().uid
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'topic', 'updatedAt'])
+          && parentProgressOwned();
+        allow delete: if isValidId(userId) && isValidId(noteId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /submissions/{submissionId} {
+        allow get: if isValidId(userId) && isValidId(submissionId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && ((isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(submissionId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidUserSubmission(incoming())
+          && incoming().uid == request.auth.uid
+          && incoming().createdAt == request.time
+          && parentProgressOwned();
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(submissionId) && (isOwner(userId) || isAdmin());
+      }
+
+      match /chat/{messageId} {
+        allow get: if isValidId(userId) && isValidId(messageId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && ((isSignedIn() && resource.data.uid == request.auth.uid) || isAdmin());
+        allow create: if isValidId(userId) && isValidId(messageId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidCopilotMessage(incoming())
+          && incoming().uid == request.auth.uid
+          && incoming().createdAt == request.time
+          && parentProgressOwned();
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(messageId) && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // 3. Questions Bank (Public Curriculum + Verified User AI Practice Batches)
+    match /questions/{questionId} {
+      allow get: if isValidId(questionId);
+      allow list: if resource.data.sourceType in ['verified_interview', 'reported_experience', 'curated_track', 'ai_generated_practice'];
+      allow create: if isValidId(questionId)
+        && isVerifiedUser()
+        && isValidQuestion(incoming())
+        && incoming().uniqueId == questionId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (incoming().sourceType == 'ai_generated_practice' && incoming().createdBy == request.auth.uid)
+        );
+      allow update: if isValidId(questionId)
+        && isAdmin()
+        && isValidQuestion(incoming())
+        && incoming().uniqueId == existing().uniqueId
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+      allow delete: if isValidId(questionId) && isAdmin();
+    }
+
+    // 4. Knowledge Hub Topics
+    match /knowledge_topics/{topicId} {
+      allow get: if isValidId(topicId);
+      allow list: if resource.data.domain is string;
+      allow create: if isValidId(topicId)
+        && isAdmin()
+        && isValidKnowledgeTopic(incoming())
+        && incoming().id == topicId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(topicId)
+        && isAdmin()
+        && isValidKnowledgeTopic(incoming())
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+      allow delete: if isValidId(topicId) && isAdmin();
+    }
+
+    // 5. Interview Experiences Repository
+    match /interview_experiences/{expId} {
+      allow get: if isValidId(expId) && (
+        resource.data.verificationStatus in ['verified', 'reported_experience'] ||
+        (isSignedIn() && resource.data.authorId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow list: if resource.data.verificationStatus in ['verified', 'reported_experience'] ||
+        (isSignedIn() && resource.data.authorId == request.auth.uid) ||
+        isAdmin();
+      allow create: if isValidId(expId)
+        && isVerifiedUser()
+        && isValidInterviewExperience(incoming())
+        && incoming().authorId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (isAdmin() || incoming().verificationStatus == 'pending_review');
+      allow update: if isValidId(expId)
+        && isVerifiedUser()
+        && isValidInterviewExperience(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            resource.data.authorId == request.auth.uid
+            && existing().verificationStatus == 'pending_review'
+            && incoming().verificationStatus == 'pending_review'
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'company', 'position', 'experience', 'location', 'round',
+              'technology', 'difficulty', 'interviewDate', 'roundsDetail',
+              'sourceAttribution', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(expId) && (isAdmin() || (isSignedIn() && existing().authorId == request.auth.uid && existing().verificationStatus == 'pending_review'));
+    }
+  }
+}
