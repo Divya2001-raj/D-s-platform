@@ -1198,9 +1198,6 @@ export default function App() {
 
               {user ? (
                 <div className="flex items-center gap-2">
-                  <span className="hidden text-xs font-semibold text-slate-300 sm:inline whitespace-nowrap">
-                    {profile.displayName}
-                  </span>
                   <button
                     type="button"
                     onClick={() => signOut(auth)}
