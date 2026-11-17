@@ -95,16 +95,6 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
                     Sync progress, SM-2 queue, Live Mock Scorecards &amp; Job Tracker
                   </p>
                 </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
-                aria-label="Close sign in dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
