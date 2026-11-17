@@ -3,12 +3,11 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   signInWithEmailAndPassword,
-  signInWithPopup,
   updateProfile,
 } from 'firebase/auth';
 import { AnimatePresence, motion } from 'motion/react';
 import { Lock, Mail, User as UserIcon, X } from 'lucide-react';
-import { auth, googleProvider } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { BrandMark } from './BrandMark';
 
 interface AuthModalProps {
@@ -23,19 +22,6 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google Sign-In failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +42,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('operation-not-allowed')) {
         setError(
-          'Email/Password provider is not enabled yet in Firebase Console -> Authentication -> Sign-in method. Please use Google Sign-In or enable Email/Password in Firebase Console.',
+          'Email/Password provider is not enabled yet in Firebase Console -> Authentication -> Sign-in method.',
         );
       } else {
         setError(msg);
@@ -84,22 +70,26 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             className="glass-surface w-full max-w-md rounded-2xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <BrandMark size={38} />
                 <div>
                   <h2 className="font-display text-lg font-bold text-white">
-                    D&apos;s platforms — DATA ENGINEER 360
+                    Di Platform — DATA ENGINEER 360
                   </h2>
                   <p className="text-xs text-slate-400">
                     Sync progress, SM-2 queue, Live Mock Scorecards &amp; Job Tracker
                   </p>
                 </div>
-
-            <div className="mb-5 flex items-center gap-3 text-xs text-slate-400">
-              <div className="h-px flex-1 bg-[var(--border-subtle)]" />
-              <span>Use email</span>
-              <div className="h-px flex-1 bg-[var(--border-subtle)]" />
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={handleEmailAuth} className="space-y-3.5">
@@ -148,7 +138,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-secondary w-full rounded-xl py-2.5 text-sm font-medium disabled:opacity-60"
+                className="btn-luminous w-full rounded-xl py-2.5 text-sm font-bold disabled:opacity-60"
               >
                 {loading ? 'Authenticating...' : mode === 'signin' ? 'Sign In with Email' : 'Create Account'}
               </button>
@@ -156,11 +146,11 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 
             <div className="mt-4 text-center text-xs text-slate-400">
               {mode === 'signin' ? (
-                <button onClick={() => setMode('signup')} className="hover:text-white hover:underline">
+                <button type="button" onClick={() => setMode('signup')} className="hover:text-white hover:underline">
                   Need an account? Sign up
                 </button>
               ) : (
-                <button onClick={() => setMode('signin')} className="hover:text-white hover:underline">
+                <button type="button" onClick={() => setMode('signin')} className="hover:text-white hover:underline">
                   Already registered? Sign in
                 </button>
               )}
