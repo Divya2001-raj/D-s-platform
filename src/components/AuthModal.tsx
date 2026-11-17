@@ -95,17 +95,10 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
                     Sync progress, SM-2 queue, Live Mock Scorecards &amp; Job Tracker
                   </p>
                 </div>
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="btn-primary mb-5 flex w-full items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm disabled:opacity-60"
-            >
-              <span>Continue with Google</span>
-            </button>
 
             <div className="mb-5 flex items-center gap-3 text-xs text-slate-400">
               <div className="h-px flex-1 bg-[var(--border-subtle)]" />
-              <span>or use email</span>
+              <span>Use email</span>
               <div className="h-px flex-1 bg-[var(--border-subtle)]" />
             </div>
 
